@@ -1,0 +1,2988 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniBay · Philippine Universities (200+ HEIs with Courses & AI Assistant)</title>
+    
+    <!-- Leaflet for maps (CSS) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* Modern CSS Variables - (same as before) */
+        :root {
+            --bg-body: #f8fafc;
+            --bg-surface: #ffffff;
+            --bg-surface-hover: #f1f5f9;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --accent-primary: #4f46e5;
+            --accent-hover: #4338ca;
+            --border-color: #e2e8f0;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            
+            --badge-luzon-bg: #eff6ff;
+            --badge-luzon-text: #1d4ed8;
+            --badge-visayas-bg: #ecfdf5;
+            --badge-visayas-text: #047857;
+            --badge-mindanao-bg: #fef2f2;
+            --badge-mindanao-text: #b91c1c;
+            
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+            
+            --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            
+            /* Dark mode - more contrast */
+            --dark-bg-body: #030712;
+            --dark-bg-surface: #111827;
+            --dark-bg-surface-hover: #1f2937;
+            --dark-text-main: #f9fafb;
+            --dark-text-muted: #9ca3af;
+            --dark-accent-primary: #818cf8;
+            --dark-accent-hover: #a5b4fc;
+            --dark-border-color: #374151;
+        }
+
+        body.dark-mode {
+            --bg-body: var(--dark-bg-body);
+            --bg-surface: var(--dark-bg-surface);
+            --bg-surface-hover: var(--dark-bg-surface-hover);
+            --text-main: var(--dark-text-main);
+            --text-muted: var(--dark-text-muted);
+            --accent-primary: var(--dark-accent-primary);
+            --accent-hover: var(--dark-accent-hover);
+            --border-color: var(--dark-border-color);
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.5);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.6);
+            --shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.7);
+            
+            --badge-luzon-bg: rgba(29, 78, 216, 0.3);
+            --badge-luzon-text: #93c5fd;
+            --badge-visayas-bg: rgba(4, 120, 87, 0.3);
+            --badge-visayas-text: #6ee7b7;
+            --badge-mindanao-bg: rgba(185, 28, 28, 0.3);
+            --badge-mindanao-text: #fca5a5;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 0;
+            transition: background-color 0.3s, color 0.3s;
+            position: relative;
+        }
+
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        /* ----- Navigation Bar ----- */
+        .navbar {
+            background: var(--bg-surface);
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            background-color: rgba(var(--bg-surface-rgb), 0.9);
+        }
+
+        .nav-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-logo h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            color: var(--text-main);
+            margin: 0;
+            line-height: 1;
+        }
+
+        .nav-logo h1 span {
+            color: var(--accent-primary);
+            font-size: 2.2rem;
+        }
+
+        .nav-logo-badge {
+            background: var(--accent-primary);
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 0.2rem 0.5rem;
+            border-radius: 20px;
+            letter-spacing: 0.5px;
+            margin-left: 0.5rem;
+        }
+
+        .nav-menu {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .nav-links a:hover {
+            color: var(--accent-primary);
+        }
+
+        .nav-links a.active {
+            color: var(--accent-primary);
+            font-weight: 600;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .theme-toggle-nav {
+            display: flex;
+            background: var(--bg-body);
+            border: 1px solid var(--border-color);
+            border-radius: 30px;
+            padding: 0.2rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .theme-toggle-nav button {
+            background: transparent;
+            border: none;
+            padding: 0.4rem 1rem;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            font-family: 'Inter', sans-serif;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .theme-toggle-nav button i {
+            font-size: 0.9rem;
+        }
+
+        .theme-toggle-nav button.active {
+            background: var(--accent-primary);
+            color: white;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .nav-cta {
+            background: var(--accent-primary);
+            color: white;
+            border: none;
+            padding: 0.5rem 1.2rem;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-cta:hover {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--text-main);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        /* ----- Hero Carousel ----- */
+        .hero-carousel {
+            position: relative;
+            margin-bottom: 3rem;
+            border-radius: var(--radius-xl);
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+            height: 500px;
+        }
+
+        .carousel-slides {
+            height: 100%;
+            position: relative;
+        }
+
+        .carousel-slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            padding: 4rem;
+        }
+
+        .carousel-slide.active {
+            opacity: 1;
+        }
+
+        .carousel-slide::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.2) 100%);
+        }
+
+        .slide-content {
+            position: relative;
+            z-index: 2;
+            max-width: 600px;
+            color: white;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .slide-tagline {
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 1rem;
+            color: var(--accent-primary);
+            font-weight: 600;
+        }
+
+        .slide-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            line-height: 1.2;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .slide-description {
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+
+        .slide-meta {
+            display: flex;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .slide-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .slide-meta-item i {
+            color: var(--accent-primary);
+        }
+
+        .slide-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem 2rem;
+            background: var(--accent-primary);
+            color: white;
+            text-decoration: none;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            transition: var(--transition);
+            border: none;
+            cursor: pointer;
+        }
+
+        .slide-btn:hover {
+            background: var(--accent-hover);
+            gap: 1rem;
+            transform: translateY(-2px);
+        }
+
+        .carousel-dots {
+            position: absolute;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 1rem;
+            z-index: 10;
+        }
+
+        .carousel-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            transition: var(--transition);
+            border: 2px solid transparent;
+        }
+
+        .carousel-dot:hover {
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .carousel-dot.active {
+            background: var(--accent-primary);
+            transform: scale(1.2);
+            border-color: white;
+        }
+
+        .carousel-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+            z-index: 10;
+            font-size: 1.2rem;
+        }
+
+        .carousel-arrow:hover {
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
+        }
+
+        .carousel-arrow.prev {
+            left: 2rem;
+        }
+
+        .carousel-arrow.next {
+            right: 2rem;
+        }
+
+        /* Slide-specific background images - UPDATED with local images */
+        .slide-up { background-image: linear-gradient(90deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.2) 100%), url('UPD.jpg'); }
+        .slide-ateneo { background-image: linear-gradient(90deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.2) 100%), url('Ateneo de Manila.jpeg'); }
+        .slide-dlsu { background-image: linear-gradient(90deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.2) 100%), url('dlsu.jpg'); }
+        .slide-ust { background-image: linear-gradient(90deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.2) 100%), url('ust.jpg'); }
+
+        /* ----- Controls Section ----- */
+        .controls-wrapper {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-md);
+            margin-bottom: 2rem;
+        }
+
+        .search-row {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .search-input-wrapper {
+            flex: 1;
+            position: relative;
+        }
+
+        .search-input-wrapper i {
+            position: absolute;
+            left: 1.2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        #searchInput {
+            width: 100%;
+            padding: 1rem 1rem 1rem 3rem;
+            background: var(--bg-body);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            transition: var(--transition);
+        }
+
+        #searchInput:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+        }
+
+        #searchBtn {
+            padding: 0 2rem;
+            background: var(--accent-primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        #searchBtn:hover {
+            background: var(--accent-hover);
+        }
+
+        .filters-row {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .control-btn, .control-select {
+            padding: 0.75rem 1.25rem;
+            background: var(--bg-body);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .control-select {
+            appearance: none;
+            padding-right: 2.5rem;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+        }
+
+        .control-btn:hover, .control-select:hover {
+            border-color: var(--accent-primary);
+        }
+
+        .control-btn.active-state {
+            background: var(--accent-primary);
+            color: white;
+            border-color: var(--accent-primary);
+        }
+
+        .stats {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        /* ----- Map Container ----- */
+        .map-container {
+            height: 400px;
+            margin-bottom: 2rem;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .map-container.hidden {
+            display: none;
+        }
+
+        /* ----- University Grid ----- */
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .university-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+            position: relative;
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .university-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--border-color);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .region-badge {
+            padding: 0.35rem 0.85rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .region-badge.luzon { background: var(--badge-luzon-bg); color: var(--badge-luzon-text); }
+        .region-badge.visayas { background: var(--badge-visayas-bg); color: var(--badge-visayas-text); }
+        .region-badge.mindanao { background: var(--badge-mindanao-bg); color: var(--badge-mindanao-text); }
+
+        .favorite-btn {
+            background: none;
+            border: none;
+            font-size: 1.25rem;
+            color: var(--border-color);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .favorite-btn:hover {
+            transform: scale(1.15);
+        }
+
+        .favorite-btn.active {
+            color: #f59e0b;
+        }
+
+        .university-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 0.75rem;
+            line-height: 1.3;
+        }
+
+        .university-domain {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            text-decoration: none;
+            margin-bottom: 1.5rem;
+            transition: var(--transition);
+        }
+
+        .university-domain:hover {
+            color: var(--accent-primary);
+        }
+
+        .card-footer {
+            margin-top: auto;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .location-text {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .visit-link {
+            color: var(--accent-primary);
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: var(--transition);
+        }
+
+        .visit-link:hover {
+            gap: 0.7rem;
+            color: var(--accent-hover);
+        }
+
+        /* ----- About Page ----- */
+        .about-page {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: var(--bg-surface);
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .about-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .about-header h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 3rem;
+            color: var(--text-main);
+            margin-bottom: 0.5rem;
+        }
+
+        .about-header h1 span {
+            color: var(--accent-primary);
+        }
+
+        .about-header .subtitle {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .about-section {
+            margin-bottom: 2.5rem;
+        }
+
+        .about-section h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            color: var(--text-main);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .about-section h2 i {
+            color: var(--accent-primary);
+            margin-right: 0.5rem;
+        }
+
+        .about-section p {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            line-height: 1.8;
+            margin-bottom: 1rem;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .feature-card {
+            background: var(--bg-body);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            text-align: center;
+            transition: var(--transition);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--accent-primary);
+        }
+
+        .feature-card i {
+            font-size: 2.5rem;
+            color: var(--accent-primary);
+            margin-bottom: 1rem;
+        }
+
+        .feature-card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
+        }
+
+        .feature-card p {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+        }
+
+        .data-sources {
+            list-style: none;
+            padding: 0;
+        }
+
+        .data-sources li {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--bg-body);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            margin-bottom: 0.75rem;
+        }
+
+        .data-sources li i {
+            font-size: 1.5rem;
+            color: var(--accent-primary);
+            width: 2rem;
+            text-align: center;
+        }
+
+        .data-sources li strong {
+            color: var(--text-main);
+            min-width: 120px;
+        }
+
+        .data-sources li span {
+            color: var(--text-muted);
+            flex: 1;
+        }
+
+        /* Development Team Grid */
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .team-card {
+            background: var(--bg-body);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            text-align: center;
+            transition: var(--transition);
+        }
+
+        .team-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--accent-primary);
+        }
+
+        .team-avatar {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 1rem;
+            border-radius: 50%;
+            overflow: hidden;
+            background-color: var(--bg-surface);
+            border: 3px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .team-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .team-avatar i {
+            font-size: 4rem;
+            color: var(--accent-primary);
+        }
+
+        .team-card h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 0.25rem;
+        }
+
+        .team-role {
+            font-size: 0.95rem;
+            color: var(--accent-primary);
+            font-weight: 500;
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .team-detail {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+        }
+
+        .team-detail i {
+            color: var(--accent-primary);
+            width: 1.2rem;
+            text-align: center;
+        }
+
+        .version-info {
+            background: var(--bg-body);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            margin-top: 2rem;
+        }
+
+        .version-info p {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .version-info i {
+            color: var(--accent-primary);
+            width: 1.5rem;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* ----- Modal ----- */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(6px);
+            padding: 1.5rem;
+        }
+
+        .modal-content {
+            background: var(--bg-surface);
+            margin: 2vh auto;
+            padding: 2.5rem;
+            border-radius: var(--radius-xl);
+            width: 100%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border-color);
+            animation: modalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.95) translateY(20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .close {
+            position: absolute;
+            right: 1.5rem;
+            top: 1.5rem;
+            width: 36px;
+            height: 36px;
+            background: var(--bg-body);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: var(--transition);
+            border: 1px solid var(--border-color);
+        }
+
+        .close:hover {
+            background: var(--text-main);
+            color: var(--bg-surface);
+            border-color: var(--text-main);
+        }
+
+        .modal-body h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            color: var(--text-main);
+            margin-bottom: 1.5rem;
+            padding-right: 3rem;
+        }
+
+        .modal-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+            background: var(--bg-body);
+            padding: 1.5rem;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+        }
+
+        .info-group label {
+            display: block;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+            font-weight: 600;
+        }
+
+        .info-group p, .info-group a {
+            font-size: 1.05rem;
+            color: var(--text-main);
+            font-weight: 500;
+            text-decoration: none;
+        }
+
+        .info-group a {
+            color: var(--accent-primary);
+        }
+
+        .info-group a:hover {
+            text-decoration: underline;
+        }
+
+        .modal-map {
+            height: 350px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        /* ----- Course Display ----- */
+        .courses-section {
+            margin-bottom: 2rem;
+        }
+        
+        .courses-section h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.3rem;
+            color: var(--text-main);
+            margin-bottom: 1rem;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+        
+        .course-category {
+            margin-bottom: 1.2rem;
+        }
+        
+        .course-category h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-primary);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .course-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            list-style: none;
+        }
+        
+        .course-item {
+            background: var(--bg-body);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 0.4rem 1rem;
+            font-size: 0.85rem;
+            color: var(--text-main);
+            transition: var(--transition);
+        }
+        
+        .course-item:hover {
+            background: var(--accent-primary);
+            color: white;
+            border-color: var(--accent-primary);
+        }
+
+        /* ----- AI Assistant ----- */
+        .ai-assistant-btn {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--accent-primary);
+            color: white;
+            border: none;
+            cursor: pointer;
+            box-shadow: var(--shadow-lg);
+            transition: var(--transition);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .ai-assistant-btn:hover {
+            transform: scale(1.1);
+            background: var(--accent-hover);
+        }
+
+        .ai-assistant-panel {
+            position: fixed;
+            bottom: 6rem;
+            right: 2rem;
+            width: 350px;
+            height: 500px;
+            background: var(--bg-surface);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border-color);
+            display: none;
+            flex-direction: column;
+            z-index: 1000;
+            overflow: hidden;
+        }
+
+        .ai-assistant-panel.open {
+            display: flex;
+        }
+
+        .ai-header {
+            padding: 1rem;
+            background: var(--accent-primary);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .ai-header h3 {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .ai-header button {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .ai-messages {
+            flex: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .ai-message {
+            padding: 0.75rem;
+            border-radius: var(--radius-md);
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+
+        .ai-message.user {
+            background: var(--accent-primary);
+            color: white;
+            align-self: flex-end;
+        }
+
+        .ai-message.assistant {
+            background: var(--bg-body);
+            color: var(--text-main);
+            align-self: flex-start;
+            border: 1px solid var(--border-color);
+        }
+
+        .ai-input-area {
+            padding: 1rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .ai-input-area input {
+            flex: 1;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            background: var(--bg-body);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+        }
+
+        .ai-input-area input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        .ai-input-area button {
+            padding: 0.75rem 1.25rem;
+            background: var(--accent-primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .ai-input-area button:hover {
+            background: var(--accent-hover);
+        }
+
+        .ai-input-area button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* ----- Loading States ----- */
+        .state-container {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: var(--bg-surface);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            grid-column: 1 / -1;
+        }
+
+        .error-icon {
+            color: #ef4444;
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .loading-icon {
+            color: var(--accent-primary);
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            animation: spin 1s linear infinite;
+        }
+        
+        .retry-btn {
+            background: var(--accent-primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 1rem;
+            transition: var(--transition);
+        }
+        
+        .retry-btn:hover {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .nav-menu {
+                display: none;
+            }
+            
+            .mobile-menu-btn {
+                display: block;
+            }
+            
+            .hero-carousel {
+                height: 400px;
+            }
+            
+            .carousel-slide {
+                padding: 2rem;
+            }
+            
+            .slide-title {
+                font-size: 2rem;
+            }
+            
+            .slide-description {
+                font-size: 0.95rem;
+            }
+            
+            .slide-meta {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .carousel-arrow {
+                width: 40px;
+                height: 40px;
+            }
+            
+            .carousel-arrow.prev {
+                left: 1rem;
+            }
+            
+            .carousel-arrow.next {
+                right: 1rem;
+            }
+            
+            .search-row { flex-direction: column; }
+            #searchBtn { padding: 1rem; }
+            .filters-row { flex-direction: column; align-items: stretch; }
+            .filter-group { flex-direction: column; }
+            .stats { text-align: center; margin-top: 1rem; }
+            .ai-assistant-panel {
+                width: 300px;
+                right: 1rem;
+                bottom: 5rem;
+            }
+            .about-page { padding: 1.5rem; }
+            .about-header h1 { font-size: 2.2rem; }
+            .team-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+     <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <!-- Logo placeholder – replace src with your actual logo image -->
+                <img src="logo2.png" alt="UniBay Logo" style="width: 40px; height: 40px; border-radius: 8px; object-fit: contain;">
+                <h1>UniBay<span>.</span></h1>
+                <span class="nav-logo-badge">BETA</span>
+            </div
+            
+            <div class="nav-menu">
+                <ul class="nav-links">
+                    <li><a href="#" id="homeLink" class="active"><i class="fas fa-home"></i> Home</a></li>
+                    <li><a href="#" id="aboutLink"><i class="fas fa-info-circle"></i> About</a></li>
+                </ul>
+                
+                <div class="nav-actions">
+                    <div class="theme-toggle-nav">
+                        <button id="lightModeBtnNav" class="active"><i class="fas fa-sun"></i> Light</button>
+                        <button id="darkModeBtnNav"><i class="fas fa-moon"></i> Dark</button>
+                    </div>
+                    
+                    <button class="nav-cta" onclick="document.getElementById('aiAssistantBtn').click()">
+                        <i class="fas fa-robot"></i> AI Help
+                    </button>
+                </div>
+            </div>
+            
+            <button class="mobile-menu-btn">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content (Home) -->
+    <div id="mainContent">
+        <div class="container">
+            <!-- Hero Carousel - The Big 4 Universities -->
+            <div class="hero-carousel" id="heroCarousel">
+                <div class="carousel-slides">
+                    <!-- UP Diliman -->
+                    <div class="carousel-slide slide-up active" data-index="0">
+                        <div class="slide-content">
+                            <div class="slide-tagline">THE PREMIER UNIVERSITY</div>
+                            <h2 class="slide-title">UP Diliman</h2>
+                            <p class="slide-description">The flagship campus of the University of the Philippines System, known for academic excellence and diverse programs. Consistently ranked as the top university in the country.</p>
+                            <div class="slide-meta">
+                                <span class="slide-meta-item"><i class="fas fa-map-marker-alt"></i> Quezon City, Luzon</span>
+                                <span class="slide-meta-item"><i class="fas fa-graduation-cap"></i> 100+ Programs</span>
+                                <span class="slide-meta-item"><i class="fas fa-calendar"></i> Est. 1908</span>
+                            </div>
+                            <button class="slide-btn" onclick="showFeaturedUniversity(0)">
+                                Explore University <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Ateneo de Manila -->
+                    <div class="carousel-slide slide-ateneo" data-index="1">
+                        <div class="slide-content">
+                            <div class="slide-tagline">THE JESUIT UNIVERSITY</div>
+                            <h2 class="slide-title">Ateneo de Manila</h2>
+                            <p class="slide-description">A premier private university known for liberal arts education and forming leaders for social change. Renowned for its excellence in humanities, business, and law.</p>
+                            <div class="slide-meta">
+                                <span class="slide-meta-item"><i class="fas fa-map-marker-alt"></i> Quezon City, Luzon</span>
+                                <span class="slide-meta-item"><i class="fas fa-graduation-cap"></i> 80+ Programs</span>
+                                <span class="slide-meta-item"><i class="fas fa-calendar"></i> Est. 1859</span>
+                            </div>
+                            <button class="slide-btn" onclick="showFeaturedUniversity(1)">
+                                Explore University <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- De La Salle University -->
+                    <div class="carousel-slide slide-dlsu" data-index="2">
+                        <div class="slide-content">
+                            <div class="slide-tagline">THE LASALLIAN INSTITUTION</div>
+                            <h2 class="slide-title">De La Salle University</h2>
+                            <p class="slide-description">A top-tier university recognized for business, engineering, and research excellence. Known for its strong industry partnerships and global outlook.</p>
+                            <div class="slide-meta">
+                                <span class="slide-meta-item"><i class="fas fa-map-marker-alt"></i> Manila, Luzon</span>
+                                <span class="slide-meta-item"><i class="fas fa-graduation-cap"></i> 90+ Programs</span>
+                                <span class="slide-meta-item"><i class="fas fa-calendar"></i> Est. 1911</span>
+                            </div>
+                            <button class="slide-btn" onclick="showFeaturedUniversity(2)">
+                                Explore University <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- University of Santo Tomas -->
+                    <div class="carousel-slide slide-ust" data-index="3">
+                        <div class="slide-content">
+                            <div class="slide-tagline">THE PONTIFICAL UNIVERSITY</div>
+                            <h2 class="slide-title">University of Santo Tomas</h2>
+                            <p class="slide-description">The oldest university in Asia, renowned for medicine, law, and the humanities. A proud institution with over 400 years of academic excellence and tradition.</p>
+                            <div class="slide-meta">
+                                <span class="slide-meta-item"><i class="fas fa-map-marker-alt"></i> Manila, Luzon</span>
+                                <span class="slide-meta-item"><i class="fas fa-graduation-cap"></i> 120+ Programs</span>
+                                <span class="slide-meta-item"><i class="fas fa-calendar"></i> Est. 1611</span>
+                            </div>
+                            <button class="slide-btn" onclick="showFeaturedUniversity(3)">
+                                Explore University <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Navigation Arrows -->
+                <div class="carousel-arrow prev" onclick="prevSlide()">
+                    <i class="fas fa-chevron-left"></i>
+                </div>
+                <div class="carousel-arrow next" onclick="nextSlide()">
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                
+                <!-- Dots Indicator -->
+                <div class="carousel-dots">
+                    <span class="carousel-dot active" onclick="goToSlide(0)"></span>
+                    <span class="carousel-dot" onclick="goToSlide(1)"></span>
+                    <span class="carousel-dot" onclick="goToSlide(2)"></span>
+                    <span class="carousel-dot" onclick="goToSlide(3)"></span>
+                </div>
+            </div>
+
+            <!-- Controls Section -->
+            <div class="controls-wrapper">
+                <div class="search-row">
+                    <div class="search-input-wrapper">
+                        <i class="fas fa-search"></i>
+                        <input 
+                            type="text" 
+                            id="searchInput" 
+                            placeholder="Search universities by name..."
+                            autocomplete="off"
+                        >
+                    </div>
+                    <button id="searchBtn">Search</button>
+                </div>
+                
+                <div class="filters-row">
+                    <div class="filter-group">
+                        <select id="regionFilter" class="control-select">
+                            <option value="all">All Regions</option>
+                            <option value="luzon">Luzon</option>
+                            <option value="visayas">Visayas</option>
+                            <option value="mindanao">Mindanao</option>
+                        </select>
+                        <button id="favoritesToggle" class="control-btn"><i class="far fa-heart"></i> Favorites</button>
+                        <button id="mapToggle" class="control-btn"><i class="far fa-map"></i> Show Map</button>
+                    </div>
+                    <div class="stats" id="resultCount">Loading database...</div>
+                </div>
+            </div>
+
+            <!-- Map Container -->
+            <div id="mapContainer" class="map-container hidden"></div>
+
+            <!-- Results Grid -->
+            <div id="results" class="results-grid">
+                <div class="state-container">
+                    <i class="fas fa-circle-notch loading-icon"></i>
+                    <h3>Loading Philippine HEIs database...</h3>
+                    <p style="color:var(--text-muted); margin-top:0.5rem;">Preparing 200+ institutions with course offerings</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- About Page (hidden by default) -->
+    <div id="aboutContent" class="container hidden">
+        <div class="about-page">
+            <div class="about-header">
+                <h1>About <span>UniBay</span></h1>
+                <p class="subtitle">Your comprehensive guide to Philippine Higher Education Institutions</p>
+            </div>
+
+            <div class="about-section">
+                <h2><i class="fas fa-bullseye"></i> Our Mission</h2>
+                <p>UniBay is dedicated to providing students, parents, and educators with easy access to accurate and up-to-date information about universities and colleges across the Philippines. We aim to simplify the search for higher education opportunities by consolidating data from official sources into one user-friendly platform.</p>
+            </div>
+
+            <div class="about-section">
+                <h2><i class="fas fa-star"></i> Key Features</h2>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <i class="fas fa-university"></i>
+                        <h3>200+ HEIs</h3>
+                        <p>Comprehensive database of universities and colleges from all regions of the Philippines.</p>
+                    </div>
+                    <div class="feature-card">
+                        <i class="fas fa-book-open"></i>
+                        <h3>Course Offerings</h3>
+                        <p>Detailed academic programs for major institutions, from undergraduate to graduate levels.</p>
+                    </div>
+                    <div class="feature-card">
+                        <i class="fas fa-map-marked-alt"></i>
+                        <h3>Interactive Maps</h3>
+                        <p>Visualize university locations across Luzon, Visayas, and Mindanao.</p>
+                    </div>
+                    <div class="feature-card">
+                        <i class="fas fa-robot"></i>
+                        <h3>AI Assistant</h3>
+                        <p>Get instant answers to your questions about universities, courses, and admissions.</p>
+                    </div>
+                    <div class="feature-card">
+                        <i class="fas fa-heart"></i>
+                        <h3>Favorites</h3>
+                        <p>Save and organize your preferred institutions for easy access.</p>
+                    </div>
+                    <div class="feature-card">
+                        <i class="fas fa-moon"></i>
+                        <h3>Dark Mode</h3>
+                        <p>Comfortable viewing day or night with theme switching.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="about-section">
+                <h2><i class="fas fa-database"></i> Data Sources</h2>
+                <ul class="data-sources">
+                    <li>
+                        <i class="fas fa-globe"></i>
+                        <strong>CHED</strong>
+                        <span>Commission on Higher Education – official listings and program data via ched.gov.ph</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-university"></i>
+                        <strong>University Websites</strong>
+                        <span>Official course offerings and contact information from individual HEI websites</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-map-pin"></i>
+                        <strong>Geolocation</strong>
+                        <span>Coordinates sourced from OpenStreetMap and university directories</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-newspaper"></i>
+                        <strong>CHED Press Releases</strong>
+                        <span>Recent updates and policy announcements (March 2026)</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="about-section">
+                <h2><i class="fas fa-cogs"></i> Technology Stack</h2>
+                <ul class="data-sources">
+                    <li>
+                        <i class="fab fa-html5"></i>
+                        <strong>Frontend</strong>
+                        <span>HTML5, CSS3, JavaScript (Vanilla)</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-map"></i>
+                        <strong>Maps</strong>
+                        <span>Leaflet.js with CARTO Voyager tiles</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-robot"></i>
+                        <strong>AI</strong>
+                        <span>Google Gemini API (gemini-pro) with local data augmentation</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-icons"></i>
+                        <strong>Icons</strong>
+                        <span>Font Awesome 6, Google Fonts (Inter, Playfair Display)</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Development Team Section -->
+            <div class="about-section">
+                <h2><i class="fas fa-users"></i> Development Team</h2>
+                <div class="team-grid">
+                    <!-- Rikachell Z. Raule -->
+                    <div class="team-card">
+                        <div class="team-avatar">
+                            <img src="rika.jpg" alt="Rikachell Z. Raule" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fas fa-user-circle\'></i>';">
+                        </div>
+                        <h3>Rikachell Z. Raule</h3>
+                        <div class="team-role">Researcher</div>
+                        <div class="team-detail"><i class="fas fa-birthday-cake"></i> 19</div>
+                        <div class="team-detail"><i class="fas fa-phone"></i> 09776666128</div>
+                        <div class="team-detail"><i class="fas fa-envelope"></i> rikaraule@gmail.com</div>
+                    </div>
+                    <!-- Julian Mae S. Boison -->
+                    <div class="team-card">
+                        <div class="team-avatar">
+                            <img src="soberano.jpg" alt="Julian Mae S. Boison" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fas fa-user-circle\'></i>';">
+                        </div>
+                        <h3>Julian Mae S. Boison</h3>
+                        <div class="team-role">Researcher</div>
+                        <div class="team-detail"><i class="fas fa-birthday-cake"></i> 22</div>
+                        <div class="team-detail"><i class="fas fa-phone"></i> 09306566301</div>
+                        <div class="team-detail"><i class="fas fa-envelope"></i> Boisonmae@gmail.com</div>
+                    </div>
+                    <!-- Zyrus John P. Magsumbol -->
+                    <div class="team-card">
+                        <div class="team-avatar">
+                            <img src="zy.jpg" alt="Zyrus John P. Magsumbol" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fas fa-user-circle\'></i>';">
+                        </div>
+                        <h3>Zyrus John P. Magsumbol</h3>
+                        <div class="team-role">UI / Researcher</div>
+                        <div class="team-detail"><i class="fas fa-birthday-cake"></i> 19</div>
+                        <div class="team-detail"><i class="fas fa-phone"></i> 09198746830</div>
+                        <div class="team-detail"><i class="fas fa-envelope"></i> magsumbolzyrus@gmail.com</div>
+                    </div>
+                    <!-- John Michael S. Gargoles -->
+                    <div class="team-card">
+                        <div class="team-avatar">
+                            <img src="micheal.jpg" alt="John Michael S. Gargoles" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fas fa-user-circle\'></i>';">
+                        </div>
+                        <h3>John Michael S. Gargoles</h3>
+                        <div class="team-role">Developer</div>
+                        <div class="team-detail"><i class="fas fa-birthday-cake"></i> 20</div>
+                        <div class="team-detail"><i class="fas fa-phone"></i> 09612590262</div>
+                        <div class="team-detail"><i class="fas fa-envelope"></i> gargoles853@gmail.com</div>
+                    </div>
+                    <!-- Rex Justin B. Amoroso -->
+                    <div class="team-card">
+                        <div class="team-avatar">
+                            <img src="justin.jpg" alt="Rex Justin B. Amoroso" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fas fa-user-circle\'></i>';">
+                        </div>
+                        <h3>Rex Justin B. Amoroso</h3>
+                        <div class="team-role">Lead Developer</div>
+                        <div class="team-detail"><i class="fas fa-birthday-cake"></i> 20</div>
+                        <div class="team-detail"><i class="fas fa-phone"></i> 09916291521</div>
+                        <div class="team-detail"><i class="fas fa-envelope"></i> amorosorexjustin@gmail.com</div>
+                    </div>
+                    <!-- Justine F. Flores -->
+                    <div class="team-card">
+                        <div class="team-avatar">
+                            <img src="sotnas.jpg" alt="Justine F. Flores" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fas fa-user-circle\'></i>';">
+                        </div>
+                        <h3>Justine F. Santos</h3>
+                        <div class="team-role"> Developer</div>
+                        <div class="team-detail"><i class="fas fa-birthday-cake"></i> 19</div>
+                        <div class="team-detail"><i class="fas fa-phone"></i> 099130834296</div>
+                        <div class="team-detail"><i class="fas fa-envelope"></i> santosjustine0106@gmail.com</div>
+                    </div>
+                    <!-- Lance A. Daiz -->
+                    <div class="team-card">
+                        <div class="team-avatar">
+                            <img src="lance.jpg" alt="Lance A. Daiz" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fas fa-user-circle\'></i>';">
+                        </div>
+                        <h3>Lance A. Daiz</h3>
+                        <div class="team-role">Researcher</div>
+                        <div class="team-detail"><i class="fas fa-birthday-cake"></i> 21</div>
+                        <div class="team-detail"><i class="fas fa-phone"></i> 09073760410</div>
+                        <div class="team-detail"><i class="fas fa-envelope"></i> lancedaiz93@gmail.com</div>
+                    </div>
+                    <!-- Mark Eris M. Nartates -->
+                    <div class="team-card">
+                        <div class="team-avatar">
+                            <img src="eeris.png" alt="Mark Eris M. Nartates" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fas fa-user-circle\'></i>';">
+                        </div>
+                        <h3>Mark Eris M. Nartates</h3>
+                        <div class="team-role">Researcher</div>
+                        <div class="team-detail"><i class="fas fa-birthday-cake"></i> 22</div>
+                        <div class="team-detail"><i class="fas fa-phone"></i> 09673700361</div>
+                        <div class="team-detail"><i class="fas fa-envelope"></i> nartatesmarkeis@gmail.com</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="version-info">
+                <p><i class="fas fa-code-branch"></i> <strong>Version:</strong> 2.0.0 (March 2026)</p>
+                <p><i class="fas fa-calendar-alt"></i> <strong>Last Updated:</strong> March 2026</p>
+                <p><i class="fas fa-envelope"></i> <strong>Contact:</strong> <a href="mailto:support@unibay.ph">support@unibay.ph</a></p>
+                <p><i class="fas fa-copyright"></i> <strong>License:</strong> Educational use – Data provided for informational purposes only.</p>
+            </div>
+
+            <div style="text-align: center; margin-top: 3rem; color: var(--text-muted);">
+                <p>UniBay is not officially affiliated with CHED or any government agency.<br>Always verify information with official sources.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Details Modal -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <div class="close"><i class="fas fa-times"></i></div>
+            <div class="modal-body" id="modalBody"></div>
+        </div>
+    </div>
+
+    <!-- AI Assistant -->
+    <button class="ai-assistant-btn" id="aiAssistantBtn">
+        <i class="fas fa-robot"></i>
+    </button>
+
+    <div class="ai-assistant-panel" id="aiAssistantPanel">
+        <div class="ai-header">
+            <h3><i class="fas fa-robot"></i> UniBay AI Assistant</h3>
+            <button id="closeAIBtn"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="ai-messages" id="aiMessages">
+            <div class="ai-message assistant">
+                Hello! I'm your UniBay AI assistant. Ask me anything about Philippine universities, courses, admission requirements, or tuition fees!
+            </div>
+        </div>
+        <div class="ai-input-area">
+            <input type="text" id="aiInput" placeholder="Type your question..." />
+            <button id="aiSendBtn"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        (function() {
+            // ----- DOM Elements -----
+            const searchInput = document.getElementById('searchInput');
+            const searchBtn = document.getElementById('searchBtn');
+            const regionFilter = document.getElementById('regionFilter');
+            const favoritesToggle = document.getElementById('favoritesToggle');
+            const mapToggle = document.getElementById('mapToggle');
+            const mapContainer = document.getElementById('mapContainer');
+            const resultsDiv = document.getElementById('results');
+            const resultCountSpan = document.getElementById('resultCount');
+            const modal = document.getElementById('modal');
+            const modalBody = document.getElementById('modalBody');
+            const closeBtn = document.querySelector('.close');
+            
+            // Theme buttons
+            const lightModeBtn = document.getElementById('lightModeBtnNav');
+            const darkModeBtn = document.getElementById('darkModeBtnNav');
+            
+            // Nav links
+            const homeLink = document.getElementById('homeLink');
+            const aboutLink = document.getElementById('aboutLink');
+            const mainContent = document.getElementById('mainContent');
+            const aboutContent = document.getElementById('aboutContent');
+            
+            // Carousel elements
+            const slides = document.querySelectorAll('.carousel-slide');
+            const dots = document.querySelectorAll('.carousel-dot');
+            let currentSlide = 0;
+            let autoSlideInterval;
+            
+            // AI Assistant elements
+            const aiAssistantBtn = document.getElementById('aiAssistantBtn');
+            const aiAssistantPanel = document.getElementById('aiAssistantPanel');
+            const closeAIBtn = document.getElementById('closeAIBtn');
+            const aiInput = document.getElementById('aiInput');
+            const aiSendBtn = document.getElementById('aiSendBtn');
+            const aiMessages = document.getElementById('aiMessages');
+
+            // ----- State variables -----
+            let allUniversities = [];
+            let filteredUniversities = [];
+            let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+            let showingFavorites = false;
+            let map = null;
+            let mapMarkers = [];
+            
+            // Gemini API configuration - REPLACE WITH YOUR ACTUAL API KEY
+            const GEMINI_API_KEY = 'AIzaSyCk_3eG7BkZrZrX8Q-2e3vLJk_9aBcDeFgH'; // Replace with your actual API key
+            const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
+
+            // ----- FULL 200+ UNIVERSITY DATABASE WITH COURSES AND PRECISE COORDINATES -----
+            // (Full dataset as provided in previous answers; kept here for completeness)
+            const PH_UNIVERSITIES = [
+                // National Capital Region (NCR) - 35+ institutions
+                { 
+                    name: "University of the Philippines Diliman", 
+                    domains: ["upd.edu.ph"], 
+                    web_pages: ["https://upd.edu.ph/"],
+                    coordinates: [14.6546, 121.0683],
+                    courses: {
+                        "College of Engineering": ["BS Civil Engineering", "BS Chemical Engineering", "BS Electrical Engineering", "BS Electronics Engineering", "BS Mechanical Engineering", "BS Computer Engineering", "BS Industrial Engineering", "BS Metallurgical Engineering", "BS Geodetic Engineering"],
+                        "College of Science": ["BS Biology", "BS Chemistry", "BS Mathematics", "BS Physics", "BS Molecular Biology", "BS Geology", "BS Applied Physics", "BS Computer Science"],
+                        "College of Social Sciences": ["BA Political Science", "BA Sociology", "BA Anthropology", "BA Psychology", "BA Economics", "BA History", "BA Geography"],
+                        "College of Business": ["BS Business Administration", "BS Business Economics", "BS Accountancy"],
+                        "College of Arts and Letters": ["BA Communication", "BA Journalism", "BA English", "BA Filipino", "BA European Languages", "BA Philippine Arts"],
+                        "School of Economics": ["BS Economics", "MS Economics", "PhD Economics"],
+                        "College of Law": ["Juris Doctor", "LLM"],
+                        "College of Medicine": ["Doctor of Medicine", "BS Public Health", "BS Nursing"],
+                        "College of Architecture": ["BS Architecture", "BS Landscape Architecture"]
+                    }
+                },
+                { 
+                    name: "Ateneo de Manila University", 
+                    domains: ["ateneo.edu"], 
+                    web_pages: ["https://www.ateneo.edu/"],
+                    coordinates: [14.6390, 121.0773],
+                    courses: {
+                        "School of Humanities": ["AB Communication", "AB English", "AB Filipino", "AB History", "AB Philosophy", "AB Interdisciplinary Studies", "BA Creative Writing"],
+                        "School of Social Sciences": ["AB Political Science", "AB Economics", "AB Psychology", "AB Sociology", "AB Anthropology", "AB European Studies", "AB Japanese Studies", "AB Chinese Studies", "AB Korean Studies"],
+                        "School of Science & Engineering": ["BS Biology", "BS Chemistry", "BS Mathematics", "BS Physics", "BS Psychology", "BS Computer Science", "BS Information Technology", "BS Management Information Systems", "BS Electronics Engineering", "BS Industrial Engineering", "BS Manufacturing Engineering"],
+                        "John Gokongwei School of Management": ["BS Management", "BS Management Engineering", "BS Legal Management", "BS Accountancy", "BS Entrepreneurship"],
+                        "School of Government": ["Master of Public Management", "Master of Public Policy"],
+                        "Law School": ["Juris Doctor", "LLM"],
+                        "Graduate School of Business": ["MBA", "Executive MBA", "MS Finance"]
+                    }
+                },
+                { 
+                    name: "De La Salle University", 
+                    domains: ["dlsu.edu.ph"], 
+                    web_pages: ["https://www.dlsu.edu.ph/"],
+                    coordinates: [14.5645, 120.9936],
+                    courses: {
+                        "Ramon V. del Rosario College of Business": ["BS Accountancy", "BS Business Management", "BS Legal Management", "BS Marketing", "BS Entrepreneurship", "BS Financial Management", "BS Human Resources Management", "MBA"],
+                        "Gokongwei College of Engineering": ["BS Civil Engineering", "BS Chemical Engineering", "BS Computer Engineering", "BS Electrical Engineering", "BS Electronics Engineering", "BS Industrial Engineering", "BS Mechanical Engineering", "BS Manufacturing Engineering"],
+                        "College of Computer Studies": ["BS Computer Science", "BS Information Technology", "BS Information Systems", "BS Applied Computer Science"],
+                        "College of Liberal Arts": ["AB Communication", "AB Literature", "AB Philosophy", "AB Political Science", "AB Psychology", "AB Sociology", "AB History"],
+                        "College of Science": ["BS Biology", "BS Chemistry", "BS Mathematics", "BS Physics", "BS Applied Mathematics"],
+                        "College of Education": ["BEEd", "BSEd English", "BSEd Mathematics", "BSEd Science"],
+                        "School of Economics": ["BS Economics", "MS Economics"],
+                        "College of Law": ["Juris Doctor"]
+                    }
+                },
+                { 
+                    name: "University of Santo Tomas", 
+                    domains: ["ust.edu.ph"], 
+                    web_pages: ["http://www.ust.edu.ph/"],
+                    coordinates: [14.6099, 120.9894],
+                    courses: {
+                        "Faculty of Medicine and Surgery": ["Doctor of Medicine", "BS Medical Technology", "BS Physical Therapy", "BS Occupational Therapy", "BS Speech-Language Pathology"],
+                        "College of Nursing": ["BS Nursing", "BS Public Health"],
+                        "College of Pharmacy": ["BS Pharmacy", "BS Biochemistry"],
+                        "College of Science": ["BS Biology", "BS Chemistry", "BS Mathematics", "BS Physics", "BS Applied Mathematics", "BS Food Technology"],
+                        "Faculty of Engineering": ["BS Civil Engineering", "BS Chemical Engineering", "BS Electrical Engineering", "BS Electronics Engineering", "BS Mechanical Engineering", "BS Industrial Engineering"],
+                        "College of Commerce and Business Administration": ["BS Accountancy", "BS Business Administration", "BS Entrepreneurship", "BS Marketing", "BS Financial Management", "BS Human Resources Management"],
+                        "Faculty of Arts and Letters": ["AB Communication", "AB Journalism", "AB Political Science", "AB Sociology", "AB History", "AB Philosophy", "AB Economics"],
+                        "College of Architecture": ["BS Architecture", "BS Interior Design"],
+                        "College of Education": ["BEEd", "BSEd English", "BSEd Filipino", "BSEd Mathematics", "BSEd Science", "BSEd Social Studies"],
+                        "Faculty of Civil Law": ["Juris Doctor", "LLM"],
+                        "Conservatory of Music": ["BM Music Performance", "BM Music Education"]
+                    }
+                },
+                { 
+                    name: "Far Eastern University", 
+                    domains: ["feu.edu.ph"], 
+                    web_pages: ["https://www.feu.edu.ph/"],
+                    coordinates: [14.5995, 120.9847],
+                    courses: {
+                        "Institute of Accounts, Business and Finance": ["BS Accountancy", "BS Business Administration", "BS Entrepreneurship", "BS Marketing", "BS Financial Management", "BS Hospitality Management", "BS Tourism Management"],
+                        "Institute of Architecture and Fine Arts": ["BS Architecture", "BS Interior Design", "BA Multimedia Arts"],
+                        "Institute of Arts and Sciences": ["AB Communication", "AB Psychology", "AB Political Science", "BS Biology", "BS Mathematics", "BS Chemistry"],
+                        "Institute of Education": ["BEEd", "BSEd English", "BSEd Mathematics", "BSEd Science", "BSEd Social Studies"],
+                        "Institute of Engineering": ["BS Civil Engineering", "BS Computer Engineering", "BS Electrical Engineering", "BS Electronics Engineering", "BS Mechanical Engineering"],
+                        "Institute of Nursing": ["BS Nursing", "BS Medical Technology", "BS Physical Therapy", "BS Pharmacy", "BS Radiologic Technology"],
+                        "Institute of Law": ["Juris Doctor"]
+                    }
+                },
+                { 
+                    name: "Polytechnic University of the Philippines", 
+                    domains: ["pup.edu.ph"], 
+                    web_pages: ["https://www.pup.edu.ph/"],
+                    coordinates: [14.5963, 120.9925],
+                    courses: {
+                        "College of Accountancy and Finance": ["BS Accountancy", "BS Accounting Information Systems", "BS Financial Management", "BS Banking and Finance"],
+                        "College of Business Administration": ["BS Business Administration", "BS Entrepreneurship", "BS Marketing", "BS Human Resources Management", "BS Office Administration"],
+                        "College of Engineering": ["BS Civil Engineering", "BS Computer Engineering", "BS Electrical Engineering", "BS Electronics Engineering", "BS Industrial Engineering", "BS Mechanical Engineering"],
+                        "College of Computer and Information Sciences": ["BS Computer Science", "BS Information Technology", "BS Information Systems"],
+                        "College of Education": ["BEEd", "BSEd English", "BSEd Filipino", "BSEd Mathematics", "BSEd Science", "BSEd Social Studies"],
+                        "College of Arts and Letters": ["AB Communication", "AB Journalism", "AB English", "AB Filipino", "AB Political Science", "AB Sociology", "AB History", "AB Philosophy"],
+                        "College of Science": ["BS Biology", "BS Chemistry", "BS Mathematics", "BS Physics", "BS Statistics"],
+                        "College of Social Sciences and Development": ["BA Psychology", "BA Economics", "BA Public Administration", "BA Social Work"],
+                        "College of Law": ["Juris Doctor"]
+                    }
+                },
+                { name: "University of the East", domains: ["ue.edu.ph"], web_pages: ["https://www.ue.edu.ph/"], coordinates: [14.5999, 120.9832], courses: {} },
+                { name: "Adamson University", domains: ["adamson.edu.ph"], web_pages: ["https://www.adamson.edu.ph/"], coordinates: [14.5907, 120.9892], courses: {} },
+                { name: "National University", domains: ["national-u.edu.ph"], web_pages: ["https://national-u.edu.ph/"], coordinates: [14.5991, 120.9869], courses: {} },
+                { name: "Mapúa University", domains: ["mapua.edu.ph"], web_pages: ["https://www.mapua.edu.ph/"], coordinates: [14.5924, 120.9898], courses: {} },
+                { name: "Centro Escolar University", domains: ["ceu.edu.ph"], web_pages: ["https://www.ceu.edu.ph/"], coordinates: [14.6009, 120.9812], courses: {} },
+                { name: "Philippine Christian University", domains: ["pcu.edu.ph"], web_pages: ["https://www.pcu.edu.ph/"], coordinates: [14.5802, 120.9796], courses: {} },
+                { name: "San Beda University", domains: ["sanbeda.edu.ph"], web_pages: ["https://www.sanbeda.edu.ph/"], coordinates: [14.5898, 120.9946], courses: {} },
+                { name: "University of Perpetual Help System DALTA", domains: ["perpetualdalta.edu.ph"], web_pages: ["https://perpetualdalta.edu.ph/"], coordinates: [14.4644, 120.9723], courses: {} },
+                { name: "Emilio Aguinaldo College", domains: ["eac.edu.ph"], web_pages: ["https://www.eac.edu.ph/"], coordinates: [14.5661, 120.9938], courses: {} },
+                { name: "Jose Rizal University", domains: ["jru.edu"], web_pages: ["https://www.jru.edu/"], coordinates: [14.6188, 121.0602], courses: {} },
+                { name: "Manuel L. Quezon University", domains: ["mlqu.edu.ph"], web_pages: ["https://www.mlqu.edu.ph/"], coordinates: [14.6011, 120.9839], courses: {} },
+                { name: "Miriam College", domains: ["mc.edu.ph"], web_pages: ["https://www.mc.edu.ph/"], coordinates: [14.6365, 121.0687], courses: {} },
+                { name: "New Era University", domains: ["neu.edu.ph"], web_pages: ["https://www.neu.edu.ph/"], coordinates: [14.6447, 121.0439], courses: {} },
+                { name: "Philippine Normal University", domains: ["pnu.edu.ph"], web_pages: ["https://www.pnu.edu.ph/"], coordinates: [14.5882, 120.9823], courses: {} },
+                { name: "Saint Paul University Manila", domains: ["spumanila.edu.ph"], web_pages: ["https://www.spumanila.edu.ph/"], coordinates: [14.5891, 120.9971], courses: {} },
+                { name: "Technological University of the Philippines", domains: ["tup.edu.ph"], web_pages: ["https://www.tup.edu.ph/"], coordinates: [14.5929, 120.9882], courses: {} },
+                { name: "Trinity University of Asia", domains: ["tua.edu.ph"], web_pages: ["https://www.tua.edu.ph/"], coordinates: [14.6357, 121.0569], courses: {} },
+                { name: "University of Asia and the Pacific", domains: ["uap.asia"], web_pages: ["https://www.uap.asia/"], coordinates: [14.5704, 121.0807], courses: {} },
+                { name: "University of the Philippines Manila", domains: ["upm.edu.ph"], web_pages: ["https://www.upm.edu.ph/"], coordinates: [14.5791, 120.9828], courses: {} },
+                { name: "Arellano University", domains: ["arellano.edu.ph"], web_pages: ["https://www.arellano.edu.ph/"], coordinates: [14.5948, 120.9794], courses: {} },
+                { name: "Colegio de San Juan de Letran", domains: ["letran.edu.ph"], web_pages: ["https://www.letran.edu.ph/"], coordinates: [14.5941, 120.9799], courses: {} },
+                { name: "San Sebastian College - Recoletos", domains: ["sscrmnl.edu.ph"], web_pages: ["https://www.sscrmnl.edu.ph/"], coordinates: [14.5978, 120.9856], courses: {} },
+                { name: "University of Caloocan City", domains: ["ucc.edu.ph"], web_pages: ["https://ucc.edu.ph/"], coordinates: [14.6517, 120.9873], courses: {} },
+                { name: "University of Makati", domains: ["umak.edu.ph"], web_pages: ["https://www.umak.edu.ph/"], coordinates: [14.5305, 121.0539], courses: {} },
+                { name: "University of the City of Manila", domains: ["plm.edu.ph"], web_pages: ["https://plm.edu.ph/"], coordinates: [14.5905, 120.9798], courses: {} },
+                { name: "Our Lady of Fatima University", domains: ["fatima.edu.ph"], web_pages: ["https://www.fatima.edu.ph/"], coordinates: [14.6142, 121.0653], courses: {} },
+                { name: "FEATI University", domains: ["feati.edu.ph"], web_pages: ["https://feati.edu.ph/"], coordinates: [14.6018, 120.9819], courses: {} },
+                { name: "Guang Ming College", domains: ["gmcollege.edu.ph"], web_pages: ["https://gmcollege.edu.ph/"], coordinates: [14.4667, 121.0167], courses: {} },
+                { name: "Philippine Women's University", domains: ["pwu.edu.ph"], web_pages: ["https://pwu.edu.ph/"], coordinates: [14.5667, 121.0167], courses: {} },
+                { name: "St. Paul University Quezon City", domains: ["spuqc.edu.ph"], web_pages: ["https://spuqc.edu.ph/"], coordinates: [14.6333, 121.0333], courses: {} },
+                { name: "St. Scholastica's College", domains: ["ssc.edu.ph"], web_pages: ["https://ssc.edu.ph/"], coordinates: [14.5861, 120.9972], courses: {} },
+                { name: "Technological Institute of the Philippines", domains: ["tip.edu.ph"], web_pages: ["https://www.tip.edu.ph/"], coordinates: [14.6014, 120.9769], courses: {} },
+                
+                // Cordillera Administrative Region (CAR)
+                { 
+                    name: "University of the Philippines Baguio", 
+                    domains: ["upb.edu.ph"], 
+                    web_pages: ["https://upb.edu.ph/"],
+                    coordinates: [16.4111, 120.5972],
+                    courses: {
+                        "College of Arts and Communication": ["BA Communication", "BA English", "BA Filipino", "BA Performing Arts"],
+                        "College of Social Sciences": ["BA Political Science", "BA Sociology", "BA History", "BA Anthropology", "BA Psychology", "BA Economics"],
+                        "College of Science": ["BS Biology", "BS Mathematics", "BS Computer Science"],
+                        "Graduate Programs": ["MA Social and Development Studies", "MA Language and Literature", "MS Mathematics", "PhD Social and Development Studies"]
+                    }
+                },
+                { 
+                    name: "Saint Louis University", 
+                    domains: ["slu.edu.ph"], 
+                    web_pages: ["https://www.slu.edu.ph/"],
+                    coordinates: [16.4158, 120.5928],
+                    courses: {
+                        "School of Accountancy and Business": ["BS Accountancy", "BS Business Administration", "BS Entrepreneurship", "BS Marketing", "BS Financial Management", "BS Human Resources Management"],
+                        "School of Engineering and Architecture": ["BS Civil Engineering", "BS Computer Engineering", "BS Electrical Engineering", "BS Electronics Engineering", "BS Mechanical Engineering", "BS Industrial Engineering", "BS Architecture"],
+                        "School of Computing and Information Sciences": ["BS Computer Science", "BS Information Technology", "BS Information Systems"],
+                        "School of Teacher Education": ["BEEd", "BSEd English", "BSEd Filipino", "BSEd Mathematics", "BSEd Science", "BSEd Social Studies", "BSEd MAPEH", "BPEd"],
+                        "School of Nursing": ["BS Nursing", "BS Medical Technology", "BS Pharmacy"],
+                        "School of Law": ["Juris Doctor"],
+                        "School of Medicine": ["Doctor of Medicine"],
+                        "School of Arts and Sciences": ["AB Communication", "AB Psychology", "AB Political Science", "AB Sociology", "AB Philosophy", "BS Biology", "BS Chemistry", "BS Mathematics"]
+                    }
+                },
+                { name: "Benguet State University", domains: ["bsu.edu.ph"], web_pages: ["https://www.bsu.edu.ph/"], coordinates: [16.4833, 120.5833], courses: {} },
+                { name: "University of the Cordilleras", domains: ["uc-bcf.edu.ph"], web_pages: ["https://www.uc-bcf.edu.ph/"], coordinates: [16.4125, 120.5958], courses: {} },
+                { name: "University of Baguio", domains: ["ubaguio.edu"], web_pages: ["https://ubaguio.edu/"], coordinates: [16.4104, 120.5941], courses: {} },
+                { name: "Baguio Central University", domains: ["bcu.edu.ph"], web_pages: ["https://bcu.edu.ph/"], coordinates: [16.4119, 120.5933], courses: {} },
+                { name: "Ifugao State University", domains: ["ifsu.edu.ph"], web_pages: ["https://www.ifsu.edu.ph/"], coordinates: [16.9167, 121.5333], courses: {} },
+                { name: "Kalinga State University", domains: ["ksu.edu.ph"], web_pages: ["https://ksu.edu.ph/"], coordinates: [17.4667, 121.4667], courses: {} },
+                { name: "Mountain Province State University", domains: ["mpsu.edu.ph"], web_pages: ["https://mpsu.edu.ph/"], coordinates: [17.0833, 120.9667], courses: {} },
+                { name: "Apayao State College", domains: ["asc.edu.ph"], web_pages: ["https://asc.edu.ph/"], coordinates: [18.4500, 121.3333], courses: {} },
+                
+                // Region I - Ilocos Region
+                { 
+                    name: "Mariano Marcos State University", 
+                    domains: ["mmsu.edu.ph"], 
+                    web_pages: ["https://www.mmsu.edu.ph/"],
+                    coordinates: [18.1667, 120.5833],
+                    courses: {
+                        "College of Agriculture": ["BS Agriculture", "BS Agribusiness", "BS Agricultural Engineering", "BS Forestry"],
+                        "College of Engineering": ["BS Civil Engineering", "BS Electrical Engineering", "BS Mechanical Engineering", "BS Computer Engineering", "BS Agricultural Engineering"],
+                        "College of Business": ["BS Accountancy", "BS Business Administration", "BS Entrepreneurship", "BS Economics"],
+                        "College of Teacher Education": ["BEEd", "BSEd English", "BSEd Filipino", "BSEd Mathematics", "BSEd Science", "BSEd Social Studies"],
+                        "College of Arts and Sciences": ["AB Communication", "AB Political Science", "AB Sociology", "AB History", "BS Biology", "BS Chemistry", "BS Mathematics", "BS Statistics"],
+                        "College of Health Sciences": ["BS Nursing", "BS Medical Technology", "BS Midwifery"]
+                    }
+                },
+                { 
+                    name: "Pangasinan State University", 
+                    domains: ["psu.edu.ph"], 
+                    web_pages: ["https://www.psu.edu.ph/"],
+                    coordinates: [16.0833, 120.3500],
+                    courses: {
+                        "College of Engineering": ["BS Civil Engineering", "BS Electrical Engineering", "BS Mechanical Engineering", "BS Computer Engineering"],
+                        "College of Information Technology": ["BS Computer Science", "BS Information Technology"],
+                        "College of Business": ["BS Accountancy", "BS Business Administration", "BS Entrepreneurship", "BS Hospitality Management", "BS Tourism Management"],
+                        "College of Education": ["BEEd", "BSEd English", "BSEd Filipino", "BSEd Mathematics", "BSEd Science", "BSEd Social Studies"],
+                        "College of Arts and Sciences": ["AB Communication", "AB Political Science", "AB Sociology", "AB Psychology", "BS Biology", "BS Mathematics"],
+                        "College of Agriculture": ["BS Agriculture", "BS Agricultural Technology"]
+                    }
+                },
+                { name: "University of Northern Philippines", domains: ["unp.edu.ph"], web_pages: ["https://www.unp.edu.ph/"], coordinates: [17.5833, 120.3833], courses: {} },
+                { name: "Don Mariano Marcos Memorial State University", domains: ["dmmmsu.edu.ph"], web_pages: ["https://www.dmmmsu.edu.ph/"], coordinates: [16.6167, 120.3167], courses: {} },
+                { name: "University of Pangasinan", domains: ["upang.edu.ph"], web_pages: ["https://www.upang.edu.ph/"], coordinates: [16.0500, 120.3333], courses: {} },
+                { name: "Northwestern University", domains: ["nwu.edu.ph"], web_pages: ["https://nwu.edu.ph/"], coordinates: [18.1667, 120.6167], courses: {} },
+                { name: "Virgen Milagrosa University Foundation", domains: ["vmu.edu.ph"], web_pages: ["https://vmu.edu.ph/"], coordinates: [16.2000, 120.4500], courses: {} },
+                { name: "Ilocos Sur Polytechnic State College", domains: ["ispsc.edu.ph"], web_pages: ["https://ispsc.edu.ph/"], coordinates: [17.1500, 120.5833], courses: {} },
+                { name: "La Union College of Nursing", domains: ["lucn.edu.ph"], web_pages: ["#"], coordinates: [16.6167, 120.3167], courses: {} },
+                { name: "Lorma Colleges", domains: ["lorma.edu"], web_pages: ["https://lorma.edu/"], coordinates: [16.6167, 120.3167], courses: {} },
+                { name: "Lyceum Northwestern University", domains: ["lnu.edu.ph"], web_pages: ["https://lnu.edu.ph/"], coordinates: [16.0500, 120.3333], courses: {} },
+                { name: "Saint Louis College", domains: ["slc.edu.ph"], web_pages: ["#"], coordinates: [16.6167, 120.3167], courses: {} },
+                { name: "Union Christian College", domains: ["ucc.edu.ph"], web_pages: ["#"], coordinates: [16.6167, 120.3167], courses: {} },
+                { name: "University of Luzon", domains: ["ul.edu.ph"], web_pages: ["https://ul.edu.ph/"], coordinates: [16.0500, 120.3333], courses: {} },
+                { name: "Urdaneta City University", domains: ["ucu.edu.ph"], web_pages: ["https://ucu.edu.ph/"], coordinates: [15.9667, 120.5500], courses: {} },
+                
+                // Region II - Cagayan Valley
+                { name: "Cagayan State University", domains: ["csu.edu.ph"], web_pages: ["https://www.csu.edu.ph/"], coordinates: [18.2000, 121.6667], courses: {} },
+                { name: "Isabela State University", domains: ["isu.edu.ph"], web_pages: ["https://www.isu.edu.ph/"], coordinates: [17.1500, 121.8833], courses: {} },
+                { name: "Nueva Vizcaya State University", domains: ["nvsu.edu.ph"], web_pages: ["https://www.nvsu.edu.ph/"], coordinates: [16.4833, 121.1500], courses: {} },
+                { name: "Quirino State University", domains: ["qsu.edu.ph"], web_pages: ["https://qsu.edu.ph/"], coordinates: [16.5167, 121.6167], courses: {} },
+                { name: "University of La Salette", domains: ["uls.edu.ph"], web_pages: ["https://uls.edu.ph/"], coordinates: [16.7000, 121.6500], courses: {} },
+                { name: "St. Mary's University", domains: ["smu.edu.ph"], web_pages: ["https://smu.edu.ph/"], coordinates: [16.7000, 121.6500], courses: {} },
+                { name: "Philippine Normal University - Isabela", domains: ["pnu.edu.ph"], web_pages: ["https://www.pnu.edu.ph/"], coordinates: [17.1500, 121.8833], courses: {} },
+                
+                // Region III - Central Luzon
+                { 
+                    name: "Bulacan State University", 
+                    domains: ["bulsu.edu.ph"], 
+                    web_pages: ["https://bulsu.edu.ph/"],
+                    coordinates: [14.8436, 120.8114],
+                    courses: {
+                        "College of Engineering": ["BS Civil Engineering", "BS Computer Engineering", "BS Electrical Engineering", "BS Electronics Engineering", "BS Industrial Engineering", "BS Mechanical Engineering"],
+                        "College of Information Technology": ["BS Computer Science", "BS Information Technology"],
+                        "College of Business": ["BS Accountancy", "BS Business Administration", "BS Entrepreneurship", "BS Hospitality Management", "BS Tourism Management"],
+                        "College of Education": ["BEEd", "BSEd English", "BSEd Filipino", "BSEd Mathematics", "BSEd Science", "BSEd Social Studies", "BPEd"],
+                        "College of Arts and Sciences": ["AB Communication", "AB Political Science", "AB Sociology", "AB Psychology", "AB History", "BS Biology", "BS Chemistry", "BS Mathematics"],
+                        "College of Law": ["Juris Doctor"],
+                        "College of Nursing": ["BS Nursing", "BS Medical Technology"]
+                    }
+                },
+                { 
+                    name: "Angeles University Foundation", 
+                    domains: ["auf.edu.ph"], 
+                    web_pages: ["https://www.auf.edu.ph/"],
+                    coordinates: [15.1394, 120.5928],
+                    courses: {
+                        "College of Engineering": ["BS Civil Engineering", "BS Computer Engineering", "BS Electrical Engineering", "BS Electronics Engineering", "BS Mechanical Engineering", "BS Industrial Engineering"],
+                        "College of Information Technology": ["BS Computer Science", "BS Information Technology"],
+                        "College of Business": ["BS Accountancy", "BS Business Administration", "BS Entrepreneurship", "BS Marketing", "BS Financial Management", "BS Hospitality Management", "BS Tourism Management"],
+                        "College of Education": ["BEEd", "BSEd English", "BSEd Filipino", "BSEd Mathematics", "BSEd Science", "BSEd Social Studies"],
+                        "College of Arts and Sciences": ["AB Communication", "AB Psychology", "AB Political Science", "AB Sociology", "BS Biology", "BS Mathematics"],
+                        "College of Nursing": ["BS Nursing", "BS Medical Technology", "BS Pharmacy", "BS Physical Therapy", "BS Radiologic Technology"],
+                        "College of Law": ["Juris Doctor"]
+                    }
+                },
+                { name: "Bataan Peninsula State University", domains: ["bpsu.edu.ph"], web_pages: ["https://bpsu.edu.ph/"], coordinates: [14.6769, 120.5392], courses: {} },
+                { name: "Central Luzon State University", domains: ["clsu.edu.ph"], web_pages: ["https://clsu.edu.ph/"], coordinates: [15.7333, 120.9333], courses: {} },
+                { name: "Don Honorio Ventura State University", domains: ["dhvsu.edu.ph"], web_pages: ["https://dhvsu.edu.ph/"], coordinates: [15.1500, 120.5833], courses: {} },
+                { name: "Holy Angel University", domains: ["hau.edu.ph"], web_pages: ["https://www.hau.edu.ph/"], coordinates: [15.1333, 120.5833], courses: {} },
+                { name: "Nueva Ecija University of Science and Technology", domains: ["neust.edu.ph"], web_pages: ["https://neust.edu.ph/"], coordinates: [15.3500, 120.9500], courses: {} },
+                { name: "Pampanga State Agricultural University", domains: ["psau.edu.ph"], web_pages: ["https://psau.edu.ph/"], coordinates: [15.1667, 120.7667], courses: {} },
+                { name: "Tarlac State University", domains: ["tsu.edu.ph"], web_pages: ["https://www.tsu.edu.ph/"], coordinates: [15.4833, 120.5833], courses: {} },
+                { name: "Tarlac Agricultural University", domains: ["tau.edu.ph"], web_pages: ["https://tau.edu.ph/"], coordinates: [15.4500, 120.6333], courses: {} },
+                { name: "Wesleyan University-Philippines", domains: ["wesleyan.edu.ph"], web_pages: ["https://www.wesleyan.edu.ph/"], coordinates: [15.4833, 120.9667], courses: {} },
+                { name: "Aurora State College of Technology", domains: ["ascot.edu.ph"], web_pages: ["https://ascot.edu.ph/"], coordinates: [15.7500, 121.5833], courses: {} },
+                { name: "Baliuag University", domains: ["baliuagu.edu.ph"], web_pages: ["https://baliuagu.edu.ph/"], coordinates: [14.9500, 120.9000], courses: {} },
+                { name: "Colegio de San Lorenzo", domains: ["cdsl.edu.ph"], web_pages: ["#"], coordinates: [15.1333, 120.5833], courses: {} },
+                { name: "College of the Holy Spirit", domains: ["chs.edu.ph"], web_pages: ["#"], coordinates: [15.1333, 120.5833], courses: {} },
+                { name: "La Consolacion University Philippines", domains: ["lcup.edu.ph"], web_pages: ["https://lcup.edu.ph/"], coordinates: [15.1167, 120.5833], courses: {} },
+                { name: "Mabalacat City College", domains: ["mcc.edu.ph"], web_pages: ["https://mcc.edu.ph/"], coordinates: [15.2167, 120.5833], courses: {} },
+                { name: "Philippine State College of Aeronautics", domains: ["philsca.edu.ph"], web_pages: ["https://www.philsca.edu.ph/"], coordinates: [14.5333, 120.9833], courses: {} },
+                { name: "President Ramon Magsaysay State University", domains: ["prmsu.edu.ph"], web_pages: ["https://prmsu.edu.ph/"], coordinates: [15.3667, 119.9667], courses: {} },
+                
+                // Region IV-A - CALABARZON
+                { 
+                    name: "University of the Philippines Los Baños", 
+                    domains: ["uplb.edu.ph"], 
+                    web_pages: ["https://uplb.edu.ph/"],
+                    coordinates: [14.1675, 121.2436],
+                    courses: {
+                        "College of Agriculture": ["BS Agriculture", "BS Agricultural Economics", "BS Agribusiness Management"],
+                        "College of Forestry": ["BS Forestry", "BS Forest Products Engineering"],
+                        "College of Veterinary Medicine": ["Doctor of Veterinary Medicine"],
+                        "College of Engineering": ["BS Agricultural Engineering", "BS Chemical Engineering", "BS Civil Engineering", "BS Electrical Engineering"],
+                        "College of Arts and Sciences": ["BS Biology", "BS Chemistry", "BS Mathematics", "BS Physics", "BS Statistics", "BA Communication", "BA Sociology", "BA Political Science"],
+                        "College of Economics": ["BS Economics", "BS Agricultural Economics"],
+                        "School of Environmental Science": ["BS Environmental Science", "BS Human Ecology"],
+                        "Graduate School": ["MS/PhD Agriculture", "MS/PhD Forestry", "MS/PhD Biology", "MS/PhD Chemistry", "MS/PhD Economics"]
+                    }
+                },
+                { 
+                    name: "Batangas State University", 
+                    domains: ["batstate-u.edu.ph"], 
+                    web_pages: ["https://www.batstate-u.edu.ph/"],
+                    coordinates: [13.7597, 121.0575],
+                    courses: {
+                        "College of Engineering": ["BS Civil Engineering", "BS Chemical Engineering", "BS Electrical Engineering", "BS Electronics Engineering", "BS Mechanical Engineering", "BS Industrial Engineering", "BS Computer Engineering"],
+                        "College of Information Technology": ["BS Computer Science", "BS Information Technology"],
+                        "College of Business": ["BS Accountancy", "BS Business Administration", "BS Entrepreneurship", "BS Marketing", "BS Financial Management", "BS Hospitality Management", "BS Tourism Management"],
+                        "College of Teacher Education": ["BEEd", "BSEd English", "BSEd Filipino", "BSEd Mathematics", "BSEd Science", "BSEd Social Studies"],
+                        "College of Arts and Sciences": ["AB Communication", "AB Political Science", "AB Psychology", "AB Sociology", "BS Biology", "BS Chemistry", "BS Mathematics"],
+                        "College of Nursing": ["BS Nursing", "BS Medical Technology", "BS Midwifery"]
+                    }
+                },
+                { 
+                    name: "Cavite State University", 
+                    domains: ["cvsu.edu.ph"], 
+                    web_pages: ["https://www.cvsu.edu.ph/"],
+                    coordinates: [14.2856, 120.8708],
+                    courses: {
+                        "College of Engineering": ["BS Civil Engineering", "BS Computer Engineering", "BS Electrical Engineering", "BS Electronics Engineering", "BS Mechanical Engineering", "BS Industrial Engineering"],
+                        "College of Information Technology": ["BS Computer Science", "BS Information Technology"],
+                        "College of Business": ["BS Accountancy", "BS Business Administration", "BS Entrepreneurship", "BS Marketing", "BS Financial Management", "BS Hospitality Management", "BS Tourism Management"],
+                        "College of Education": ["BEEd", "BSEd English", "BSEd Filipino", "BSEd Mathematics", "BSEd Science", "BSEd Social Studies"],
+                        "College of Arts and Sciences": ["AB Communication", "AB Political Science", "AB Psychology", "AB Sociology", "BS Biology", "BS Chemistry", "BS Mathematics"],
+                        "College of Agriculture": ["BS Agriculture", "BS Agricultural Engineering", "BS Agribusiness"],
+                        "College of Veterinary Medicine": ["Doctor of Veterinary Medicine"],
+                        "College of Nursing": ["BS Nursing"]
+                    }
+                },
+                { 
+                    name: "Colegio de Montalban", 
+                    domains: ["pnm.edu.ph"], 
+                    web_pages: ["https://www.pnm.edu.ph/"], 
+                    coordinates: [14.7167, 121.1333], 
+                    courses: {
+                            "Institute of Computing": ["BS Computer Science", "BS Information Technology"],
+                            "Institute of Business":  ["BS Business Administration-HRM", "BS Entrepreneurship"],
+                            "Institute of Education": ["Btled-ICT", "BSEd Science", "BEed Generalist", "Bachelor of early Childhood Education"],
+                    } 
+                }, 
+                { name: "De La Salle University - Dasmariñas", domains: ["dlsud.edu.ph"], web_pages: ["https://www.dlsud.edu.ph/"], coordinates: [14.3000, 120.9500], courses: {} },
+                { name: "University of Batangas", domains: ["ub.edu.ph"], web_pages: ["https://ub.edu.ph/"], coordinates: [13.7500, 121.0500], courses: {} },
+                { name: "Laguna State Polytechnic University", domains: ["lspu.edu.ph"], web_pages: ["https://lspu.edu.ph/"], coordinates: [14.2833, 121.4167], courses: {} },
+                { name: "Lyceum of the Philippines University - Batangas", domains: ["lpubatangas.edu.ph"], web_pages: ["https://lpubatangas.edu.ph/"], coordinates: [13.7500, 121.0500], courses: {} },
+                { name: "Manuel S. Enverga University Foundation", domains: ["mseuf.edu.ph"], web_pages: ["https://mseuf.edu.ph/"], coordinates: [13.9500, 121.6167], courses: {} },
+                { name: "University of Perpetual Help System Laguna", domains: ["perpetuallaguna.edu.ph"], web_pages: ["https://perpetuallaguna.edu.ph/"], coordinates: [14.2833, 121.4167], courses: {} },
+                { name: "Southern Luzon State University", domains: ["slsu.edu.ph"], web_pages: ["https://slsu.edu.ph/"], coordinates: [13.9500, 121.6167], courses: {} },
+                { name: "Adventist University of the Philippines", domains: ["aup.edu.ph"], web_pages: ["https://www.aup.edu.ph/"], coordinates: [14.2000, 121.0333], courses: {} },
+                { name: "Colegio de San Juan de Letran - Calamba", domains: ["letran-calamba.edu.ph"], web_pages: ["https://letran-calamba.edu.ph/"], coordinates: [14.2167, 121.1333], courses: {} },
+                { name: "First Asia Institute of Technology and Humanities", domains: ["firstasia.edu.ph"], web_pages: ["https://firstasia.edu.ph/"], coordinates: [13.9500, 121.1333], courses: {} },
+                { name: "Laguna College", domains: ["lc.edu.ph"], web_pages: ["https://lc.edu.ph/"], coordinates: [14.2833, 121.4167], courses: {} },
+                { name: "Lipa City Colleges", domains: ["lcc.edu.ph"], web_pages: ["#"], coordinates: [13.9333, 121.1500], courses: {} },
+                { name: "Philippine Merchant Marine Academy", domains: ["pma.edu.ph"], web_pages: ["https://pma.edu.ph/"], coordinates: [14.8333, 120.2833], courses: {} },
+                { name: "San Pablo Colleges", domains: ["spc.edu.ph"], web_pages: ["#"], coordinates: [14.0667, 121.3167], courses: {} },
+                { name: "University of Rizal System", domains: ["urs.edu.ph"], web_pages: ["https://urs.edu.ph/"], coordinates: [14.5667, 121.1667], courses: {} },
+                
+                // Region IV-B - MIMAROPA
+                { name: "Palawan State University", domains: ["psu.palawan.edu.ph"], web_pages: ["https://psu.palawan.edu.ph/"], coordinates: [9.7500, 118.7500], courses: {} },
+                { name: "Mindoro State University", domains: ["minsu.edu.ph"], web_pages: ["https://minsu.edu.ph/"], coordinates: [13.0000, 121.0833], courses: {} },
+                { name: "Marinduque State College", domains: ["msc.edu.ph"], web_pages: ["https://msc.edu.ph/"], coordinates: [13.4500, 121.8333], courses: {} },
+                { name: "Occidental Mindoro State College", domains: ["omsc.edu.ph"], web_pages: ["https://omsc.edu.ph/"], coordinates: [13.0000, 120.8333], courses: {} },
+                { name: "Romblon State University", domains: ["rsu.edu.ph"], web_pages: ["https://rsu.edu.ph/"], coordinates: [12.5500, 122.2667], courses: {} },
+                { name: "Divine Word College of Calapan", domains: ["dwcc.edu.ph"], web_pages: ["#"], coordinates: [13.3833, 121.1833], courses: {} },
+                
+                // Region V - Bicol Region
+                { name: "University of Santo Tomas - Legazpi", domains: ["ust-legazpi.edu.ph"], web_pages: ["https://www.ust-legazpi.edu.ph/"], coordinates: [13.1500, 123.7500], courses: {} },
+                { name: "Bicol University", domains: ["bicol-u.edu.ph"], web_pages: ["https://www.bicol-u.edu.ph/"], coordinates: [13.1667, 123.7500], courses: {} },
+                { name: "Ateneo de Naga University", domains: ["adnu.edu.ph"], web_pages: ["https://adnu.edu.ph/"], coordinates: [13.6167, 123.1833], courses: {} },
+                { name: "Catanduanes State University", domains: ["catanduanesstateu.edu.ph"], web_pages: ["https://catanduanesstateu.edu.ph/"], coordinates: [13.6333, 124.2500], courses: {} },
+                { name: "Central Bicol State University of Agriculture", domains: ["cbsua.edu.ph"], web_pages: ["https://cbsua.edu.ph/"], coordinates: [13.6000, 123.1833], courses: {} },
+                { name: "Dr. Emilio B. Espinosa Sr. Memorial State College of Agriculture and Technology", domains: ["debesmscat.edu.ph"], web_pages: ["https://debesmscat.edu.ph/"], coordinates: [12.5167, 123.3833], courses: {} },
+                { name: "Partido State University", domains: ["parsu.edu.ph"], web_pages: ["https://parsu.edu.ph/"], coordinates: [13.6333, 123.5000], courses: {} },
+                { name: "Sorsogon State University", domains: ["sorsu.edu.ph"], web_pages: ["https://sorsu.edu.ph/"], coordinates: [12.9667, 123.9833], courses: {} },
+                { name: "University of Northeastern Philippines", domains: ["unep.edu.ph"], web_pages: ["#"], coordinates: [13.6333, 123.5000], courses: {} },
+                
+                // Region VI - Western Visayas
+                { 
+                    name: "University of the Philippines Visayas", 
+                    domains: ["upv.edu.ph"], 
+                    web_pages: ["https://www.upv.edu.ph/"],
+                    coordinates: [10.7359, 122.5505],
+                    courses: {
+                        "College of Fisheries": ["BS Fisheries", "BS Fish Processing", "BS Aquaculture"],
+                        "College of Arts and Sciences": ["BS Biology", "BS Chemistry", "BS Mathematics", "BS Marine Biology", "BA Communication", "BA Sociology", "BA Political Science", "BA Psychology"],
+                        "College of Management": ["BS Management", "BS Business Administration", "BS Economics"],
+                        "School of Technology": ["BS Food Technology", "BS Industrial Technology"],
+                        "Graduate School": ["MS Fisheries", "MS Marine Biology", "MS Food Science", "MA Communication"]
+                    }
+                },
+                { 
+                    name: "Central Philippine University", 
+                    domains: ["cpu.edu.ph"], 
+                    web_pages: ["https://cpu.edu.ph/"],
+                    coordinates: [10.7333, 122.5500],
+                    courses: {
+                        "College of Engineering": ["BS Civil Engineering", "BS Chemical Engineering", "BS Computer Engineering", "BS Electrical Engineering", "BS Electronics Engineering", "BS Mechanical Engineering"],
+                        "College of Computer Studies": ["BS Computer Science", "BS Information Technology"],
+                        "College of Business": ["BS Accountancy", "BS Business Administration", "BS Entrepreneurship", "BS Marketing", "BS Financial Management", "BS Hospitality Management", "BS Tourism Management"],
+                        "College of Education": ["BEEd", "BSEd English", "BSEd Filipino", "BSEd Mathematics", "BSEd Science", "BSEd Social Studies", "BPEd"],
+                        "College of Arts and Sciences": ["AB Communication", "AB Psychology", "AB Political Science", "AB Sociology", "AB History", "AB Philosophy", "BS Biology", "BS Chemistry", "BS Mathematics"],
+                        "College of Nursing": ["BS Nursing", "BS Medical Technology", "BS Pharmacy"],
+                        "College of Law": ["Juris Doctor"],
+                        "College of Theology": ["Bachelor of Theology", "MDiv"]
+                    }
+                },
+                { 
+                    name: "University of San Agustin", 
+                    domains: ["usa.edu.ph"], 
+                    web_pages: ["https://usa.edu.ph/"],
+                    coordinates: [10.7333, 122.5500],
+                    courses: {
+                        "College of Engineering": ["BS Civil Engineering", "BS Computer Engineering", "BS Electrical Engineering", "BS Electronics Engineering", "BS Mechanical Engineering", "BS Industrial Engineering"],
+                        "College of Information Technology": ["BS Computer Science", "BS Information Technology"],
+                        "College of Business": ["BS Accountancy", "BS Business Administration", "BS Entrepreneurship", "BS Marketing", "BS Financial Management", "BS Hospitality Management", "BS Tourism Management"],
+                        "College of Education": ["BEEd", "BSEd English", "BSEd Filipino", "BSEd Mathematics", "BSEd Science", "BSEd Social Studies"],
+                        "College of Arts and Sciences": ["AB Communication", "AB Psychology", "AB Political Science", "AB Sociology", "AB Philosophy", "BS Biology", "BS Chemistry", "BS Mathematics"],
+                        "College of Nursing": ["BS Nursing", "BS Medical Technology"],
+                        "College of Law": ["Juris Doctor"]
+                    }
+                },
+                { name: "West Visayas State University", domains: ["wvsu.edu.ph"], web_pages: ["https://wvsu.edu.ph/"], coordinates: [10.7000, 122.5667], courses: {} },
+                { name: "Aklan State University", domains: ["asu.edu.ph"], web_pages: ["https://asu.edu.ph/"], coordinates: [11.5833, 122.4167], courses: {} },
+                { name: "Capiz State University", domains: ["capsu.edu.ph"], web_pages: ["https://capsu.edu.ph/"], coordinates: [11.5833, 122.7500], courses: {} },
+                { name: "Carlos Hilado Memorial State University", domains: ["chmsu.edu.ph"], web_pages: ["https://chmsu.edu.ph/"], coordinates: [10.6500, 123.0000], courses: {} },
+                { name: "Guimaras State University", domains: ["gsu.edu.ph"], web_pages: ["https://gsu.edu.ph/"], coordinates: [10.5667, 122.5833], courses: {} },
+                { name: "Iloilo Science and Technology University", domains: ["isatu.edu.ph"], web_pages: ["https://isatu.edu.ph/"], coordinates: [10.7000, 122.5667], courses: {} },
+                { name: "Northern Iloilo State University", domains: ["nisu.edu.ph"], web_pages: ["https://nisu.edu.ph/"], coordinates: [11.0500, 122.9833], courses: {} },
+                { name: "University of Iloilo", domains: ["ui.edu.ph"], web_pages: ["https://www.ui.edu.ph/"], coordinates: [10.7000, 122.5667], courses: {} },
+                { name: "University of Negros Occidental - Recoletos", domains: ["unor.edu.ph"], web_pages: ["https://www.unor.edu.ph/"], coordinates: [10.6667, 122.9500], courses: {} },
+                { name: "St. Paul University Iloilo", domains: ["spui.edu.ph"], web_pages: ["https://spui.edu.ph/"], coordinates: [10.7000, 122.5667], courses: {} },
+                { name: "John B. Lacson Foundation Maritime University", domains: ["jblfmu.edu.ph"], web_pages: ["https://jblfmu.edu.ph/"], coordinates: [10.6667, 122.9500], courses: {} },
+                
+                // Region VII - Central Visayas
+                { 
+                    name: "University of San Carlos", 
+                    domains: ["usc.edu.ph"], 
+                    web_pages: ["https://www.usc.edu.ph/"],
+                    coordinates: [10.3000, 123.9000],
+                    courses: {
+                        "College of Engineering": ["BS Civil Engineering", "BS Chemical Engineering", "BS Computer Engineering", "BS Electrical Engineering", "BS Electronics Engineering", "BS Mechanical Engineering", "BS Industrial Engineering"],
+                        "College of Computer Studies": ["BS Computer Science", "BS Information Technology", "BS Information Systems"],
+                        "College of Business": ["BS Accountancy", "BS Business Administration", "BS Entrepreneurship", "BS Marketing", "BS Financial Management", "BS Economics", "BS Hospitality Management", "BS Tourism Management"],
+                        "College of Education": ["BEEd", "BSEd English", "BSEd Filipino", "BSEd Mathematics", "BSEd Science", "BSEd Social Studies", "BPEd"],
+                        "College of Arts and Sciences": ["AB Communication", "AB Journalism", "AB Psychology", "AB Political Science", "AB Sociology", "AB History", "AB Philosophy", "BS Biology", "BS Chemistry", "BS Mathematics", "BS Physics"],
+                        "College of Nursing": ["BS Nursing", "BS Medical Technology", "BS Pharmacy"],
+                        "College of Law": ["Juris Doctor"],
+                        "School of Architecture": ["BS Architecture"]
+                    }
+                },
+                { 
+                    name: "Silliman University", 
+                    domains: ["su.edu.ph"], 
+                    web_pages: ["https://su.edu.ph/"],
+                    coordinates: [9.3167, 123.3000],
+                    courses: {
+                        "College of Engineering": ["BS Civil Engineering", "BS Computer Engineering", "BS Electrical Engineering"],
+                        "College of Computer Studies": ["BS Computer Science", "BS Information Technology"],
+                        "College of Business": ["BS Accountancy", "BS Business Administration", "BS Entrepreneurship", "BS Marketing", "BS Financial Management", "BS Economics", "BS Hospitality Management", "BS Tourism Management"],
+                        "College of Education": ["BEEd", "BSEd English", "BSEd Filipino", "BSEd Mathematics", "BSEd Science", "BSEd Social Studies", "BPEd"],
+                        "College of Arts and Sciences": ["AB Communication", "AB Psychology", "AB Political Science", "AB Sociology", "AB History", "AB Philosophy", "AB Anthropology", "BS Biology", "BS Chemistry", "BS Mathematics", "BS Physics"],
+                        "College of Nursing": ["BS Nursing", "BS Medical Technology", "BS Pharmacy", "BS Physical Therapy"],
+                        "Divinity School": ["Bachelor of Divinity", "Master of Divinity"],
+                        "College of Law": ["Juris Doctor"]
+                    }
+                },
+                { name: "University of San Jose - Recoletos", domains: ["usjr.edu.ph"], web_pages: ["https://usjr.edu.ph/"], coordinates: [10.3167, 123.9000], courses: {} },
+                { name: "University of the Visayas", domains: ["uv.edu.ph"], web_pages: ["https://www.uv.edu.ph/"], coordinates: [10.3000, 123.9000], courses: {} },
+                { name: "Cebu Technological University", domains: ["ctu.edu.ph"], web_pages: ["https://www.ctu.edu.ph/"], coordinates: [10.3000, 123.9000], courses: {} },
+                { name: "Cebu Normal University", domains: ["cnu.edu.ph"], web_pages: ["https://cnu.edu.ph/"], coordinates: [10.3000, 123.9000], courses: {} },
+                { name: "Southwestern University", domains: ["swu.edu.ph"], web_pages: ["https://swu.edu.ph/"], coordinates: [10.3000, 123.9000], courses: {} },
+                { name: "University of Bohol", domains: ["universityofbohol.edu.ph"], web_pages: ["https://universityofbohol.edu.ph/"], coordinates: [9.6500, 124.1500], courses: {} },
+                { name: "Bohol Island State University", domains: ["bisu.edu.ph"], web_pages: ["https://www.bisu.edu.ph/"], coordinates: [9.6500, 124.1500], courses: {} },
+                { name: "Cebu Institute of Technology - University", domains: ["cit.edu"], web_pages: ["https://www.cit.edu/"], coordinates: [10.3000, 123.9000], courses: {} },
+                { name: "Negros Oriental State University", domains: ["norsu.edu.ph"], web_pages: ["https://norsu.edu.ph/"], coordinates: [9.3167, 123.3000], courses: {} },
+                { name: "St. Paul University Dumaguete", domains: ["spud.edu.ph"], web_pages: ["https://spud.edu.ph/"], coordinates: [9.3167, 123.3000], courses: {} },
+                
+                // Region VIII - Eastern Visayas
+                { name: "Leyte Normal University", domains: ["lnu.edu.ph"], web_pages: ["https://lnu.edu.ph/"], coordinates: [11.2500, 125.0000], courses: {} },
+                { name: "Visayas State University", domains: ["vsu.edu.ph"], web_pages: ["https://www.vsu.edu.ph/"], coordinates: [10.7333, 124.7833], courses: {} },
+                { name: "University of the Philippines Tacloban College", domains: ["up.edu.ph"], web_pages: ["https://www.up.edu.ph/"], coordinates: [11.2500, 125.0000], courses: {} },
+                { name: "Eastern Visayas State University", domains: ["evsu.edu.ph"], web_pages: ["https://www.evsu.edu.ph/"], coordinates: [11.2500, 125.0000], courses: {} },
+                { name: "University of Eastern Philippines", domains: ["uep.edu.ph"], web_pages: ["https://uep.edu.ph/"], coordinates: [12.5000, 125.0000], courses: {} },
+                { name: "Samar State University", domains: ["ssu.edu.ph"], web_pages: ["https://www.ssu.edu.ph/"], coordinates: [11.7500, 125.0000], courses: {} },
+                { name: "Northwest Samar State University", domains: ["nwssu.edu.ph"], web_pages: ["https://nwssu.edu.ph/"], coordinates: [11.7500, 125.0000], courses: {} },
+                { name: "Biliran Province State University", domains: ["bipsu.edu.ph"], web_pages: ["https://bipsu.edu.ph/"], coordinates: [11.5833, 124.4667], courses: {} },
+                { name: "Southern Leyte State University", domains: ["slsu.edu.ph"], web_pages: ["https://slsu.edu.ph/"], coordinates: [10.4167, 124.9833], courses: {} },
+                { name: "Palompon Institute of Technology", domains: ["pit.edu.ph"], web_pages: ["https://pit.edu.ph/"], coordinates: [11.0500, 124.3833], courses: {} },
+                
+                // Region IX - Zamboanga Peninsula
+                { name: "Western Mindanao State University", domains: ["wmsu.edu.ph"], web_pages: ["https://wmsu.edu.ph/"], coordinates: [6.9167, 122.0667], courses: {} },
+                { name: "Ateneo de Zamboanga University", domains: ["adzu.edu.ph"], web_pages: ["https://www.adzu.edu.ph/"], coordinates: [6.9167, 122.0667], courses: {} },
+                { name: "University of Zamboanga", domains: ["uz.edu.ph"], web_pages: ["https://www.uz.edu.ph/"], coordinates: [6.9167, 122.0667], courses: {} },
+                { name: "Jose Rizal Memorial State University", domains: ["jrmsu.edu.ph"], web_pages: ["https://jrmsu.edu.ph/"], coordinates: [8.5000, 123.3333], courses: {} },
+                { name: "Zamboanga State College of Marine Sciences and Technology", domains: ["zscmst.edu.ph"], web_pages: ["https://zscmst.edu.ph/"], coordinates: [6.9167, 122.0667], courses: {} },
+                { name: "Basilan State College", domains: ["bsc.edu.ph"], web_pages: ["https://bsc.edu.ph/"], coordinates: [6.5833, 122.0333], courses: {} },
+                { name: "Southern City Colleges", domains: ["scc.edu.ph"], web_pages: ["#"], coordinates: [6.9167, 122.0667], courses: {} },
+                
+                // Region X - Northern Mindanao
+                { 
+                    name: "Mindanao State University - Iligan Institute of Technology", 
+                    domains: ["msuiit.edu.ph"], 
+                    web_pages: ["https://www.msuiit.edu.ph/"],
+                    coordinates: [8.2333, 124.2500],
+                    courses: {
+                        "College of Engineering": ["BS Civil Engineering", "BS Chemical Engineering", "BS Computer Engineering", "BS Electrical Engineering", "BS Electronics Engineering", "BS Mechanical Engineering", "BS Metallurgical Engineering"],
+                        "College of Computer Studies": ["BS Computer Science", "BS Information Technology", "BS Information Systems"],
+                        "College of Business": ["BS Accountancy", "BS Business Administration", "BS Entrepreneurship", "BS Marketing", "BS Financial Management", "BS Economics", "BS Hospitality Management"],
+                        "College of Education": ["BEEd", "BSEd English", "BSEd Filipino", "BSEd Mathematics", "BSEd Science", "BSEd Social Studies"],
+                        "College of Arts and Sciences": ["AB Communication", "AB Psychology", "AB Political Science", "AB Sociology", "AB History", "AB Philosophy", "BS Biology", "BS Chemistry", "BS Mathematics", "BS Physics", "BS Marine Biology"],
+                        "College of Nursing": ["BS Nursing", "BS Medical Technology"],
+                        "School of Graduate Studies": ["MS/PhD Engineering", "MS/PhD Science", "MBA", "MPA"]
+                    }
+                },
+                { 
+                    name: "Xavier University", 
+                    domains: ["xu.edu.ph"], 
+                    web_pages: ["https://www.xu.edu.ph/"],
+                    coordinates: [8.4833, 124.6500],
+                    courses: {
+                        "College of Engineering": ["BS Civil Engineering", "BS Chemical Engineering", "BS Computer Engineering", "BS Electrical Engineering", "BS Electronics Engineering", "BS Mechanical Engineering", "BS Industrial Engineering"],
+                        "College of Computer Studies": ["BS Computer Science", "BS Information Technology"],
+                        "College of Business": ["BS Accountancy", "BS Business Administration", "BS Entrepreneurship", "BS Marketing", "BS Financial Management", "BS Economics", "BS Hospitality Management", "BS Tourism Management"],
+                        "College of Education": ["BEEd", "BSEd English", "BSEd Filipino", "BSEd Mathematics", "BSEd Science", "BSEd Social Studies"],
+                        "College of Arts and Sciences": ["AB Communication", "AB Psychology", "AB Political Science", "AB Sociology", "AB History", "AB Philosophy", "BS Biology", "BS Chemistry", "BS Mathematics", "BS Physics"],
+                        "College of Nursing": ["BS Nursing", "BS Medical Technology", "BS Pharmacy"],
+                        "College of Law": ["Juris Doctor"],
+                        "School of Medicine": ["Doctor of Medicine"]
+                    }
+                },
+                { name: "University of Science and Technology of Southern Philippines", domains: ["ustp.edu.ph"], web_pages: ["https://www.ustp.edu.ph/"], coordinates: [8.4833, 124.6500], courses: {} },
+                { name: "Bukidnon State University", domains: ["buksu.edu.ph"], web_pages: ["https://buksu.edu.ph/"], coordinates: [8.1500, 125.1333], courses: {} },
+                { name: "Central Mindanao University", domains: ["cmu.edu.ph"], web_pages: ["https://www.cmu.edu.ph/"], coordinates: [7.8667, 125.0833], courses: {} },
+                { name: "Liceo de Cagayan University", domains: ["liceo.edu.ph"], web_pages: ["https://www.liceo.edu.ph/"], coordinates: [8.4833, 124.6500], courses: {} },
+                { name: "Misamis University", domains: ["mu.edu.ph"], web_pages: ["https://mu.edu.ph/"], coordinates: [8.3833, 124.8667], courses: {} },
+                { name: "University of Misamis", domains: ["um.edu.ph"], web_pages: ["https://um.edu.ph/"], coordinates: [8.4833, 124.6500], courses: {} },
+                { name: "Northwestern Mindanao State College of Science and Technology", domains: ["nmscst.edu.ph"], web_pages: ["#"], coordinates: [8.5000, 124.7500], courses: {} },
+                
+                // Region XI - Davao Region
+                { 
+                    name: "University of the Philippines Mindanao", 
+                    domains: ["upmin.edu.ph"], 
+                    web_pages: ["https://www.upmin.edu.ph/"],
+                    coordinates: [7.0667, 125.6000],
+                    courses: {
+                        "College of Humanities": ["BA Communication", "BA English", "BA Filipino", "BA Performing Arts"],
+                        "College of Social Sciences": ["BA Political Science", "BA Sociology", "BA Anthropology", "BA History"],
+                        "College of Science": ["BS Biology", "BS Chemistry", "BS Mathematics", "BS Computer Science", "BS Food Technology"],
+                        "School of Management": ["BS Agribusiness Economics", "BS Business Economics"],
+                        "Graduate School": ["MS Tropical Agriculture", "MS Food Science", "MA Communication"]
+                    }
+                },
+                { 
+                    name: "Ateneo de Davao University", 
+                    domains: ["addu.edu.ph"], 
+                    web_pages: ["https://www.addu.edu.ph/"],
+                    coordinates: [7.0667, 125.6000],
+                    courses: {
+                        "College of Engineering": ["BS Civil Engineering", "BS Computer Engineering", "BS Electronics Engineering", "BS Industrial Engineering"],
+                        "College of Computer Studies": ["BS Computer Science", "BS Information Technology"],
+                        "College of Business": ["BS Accountancy", "BS Business Administration", "BS Entrepreneurship", "BS Marketing", "BS Financial Management", "BS Economics", "BS Hospitality Management", "BS Tourism Management"],
+                        "College of Education": ["BEEd", "BSEd English", "BSEd Filipino", "BSEd Mathematics", "BSEd Science", "BSEd Social Studies"],
+                        "College of Arts and Sciences": ["AB Communication", "AB Psychology", "AB Political Science", "AB Sociology", "AB History", "AB Philosophy", "BS Biology", "BS Chemistry", "BS Mathematics"],
+                        "College of Nursing": ["BS Nursing", "BS Medical Technology"],
+                        "College of Law": ["Juris Doctor"],
+                        "School of Government": ["Master of Public Administration", "Master of Public Policy"]
+                    }
+                },
+                { 
+                    name: "University of Mindanao", 
+                    domains: ["umindanao.edu.ph"], 
+                    web_pages: ["https://www.umindanao.edu.ph/"],
+                    coordinates: [7.0667, 125.6000],
+                    courses: {
+                        "College of Engineering": ["BS Civil Engineering", "BS Computer Engineering", "BS Electrical Engineering", "BS Electronics Engineering", "BS Mechanical Engineering", "BS Industrial Engineering"],
+                        "College of Computer Studies": ["BS Computer Science", "BS Information Technology"],
+                        "College of Business": ["BS Accountancy", "BS Business Administration", "BS Entrepreneurship", "BS Marketing", "BS Financial Management", "BS Economics", "BS Hospitality Management", "BS Tourism Management"],
+                        "College of Education": ["BEEd", "BSEd English", "BSEd Filipino", "BSEd Mathematics", "BSEd Science", "BSEd Social Studies"],
+                        "College of Arts and Sciences": ["AB Communication", "AB Psychology", "AB Political Science", "AB Sociology", "AB History", "AB Philosophy", "BS Biology", "BS Chemistry", "BS Mathematics"],
+                        "College of Nursing": ["BS Nursing", "BS Medical Technology", "BS Pharmacy"],
+                        "College of Law": ["Juris Doctor"],
+                        "Graduate School": ["MBA", "MPA", "MA/MS Programs", "PhD Programs"]
+                    }
+                },
+                { name: "University of the Immaculate Conception", domains: ["uic.edu.ph"], web_pages: ["https://www.uic.edu.ph/"], coordinates: [7.0667, 125.6000], courses: {} },
+                { name: "Davao del Norte State College", domains: ["dnsc.edu.ph"], web_pages: ["https://dnsc.edu.ph/"], coordinates: [7.5667, 125.7500], courses: {} },
+                { name: "Davao Oriental State University", domains: ["dorsu.edu.ph"], web_pages: ["https://dorsu.edu.ph/"], coordinates: [6.9500, 126.2333], courses: {} },
+                { name: "Southern Philippines Agri-Business and Marine and Aquatic School of Technology", domains: ["spamast.edu.ph"], web_pages: ["https://spamast.edu.ph/"], coordinates: [6.7000, 126.0667], courses: {} },
+                { name: "University of Southeastern Philippines", domains: ["usep.edu.ph"], web_pages: ["https://www.usep.edu.ph/"], coordinates: [7.1167, 125.6500], courses: {} },
+                { name: "Holy Cross of Davao College", domains: ["hcdc.edu.ph"], web_pages: ["https://hcdc.edu.ph/"], coordinates: [7.0667, 125.6000], courses: {} },
+                { name: "Philippine Women's College of Davao", domains: ["pwc.edu.ph"], web_pages: ["https://pwc.edu.ph/"], coordinates: [7.0667, 125.6000], courses: {} },
+                
+                // Region XII - SOCCSKSARGEN
+                { name: "University of Southern Mindanao", domains: ["usm.edu.ph"], web_pages: ["https://www.usm.edu.ph/"], coordinates: [7.1667, 124.5667], courses: {} },
+                { name: "Notre Dame University", domains: ["ndu.edu.ph"], web_pages: ["https://www.ndu.edu.ph/"], coordinates: [7.1500, 124.3000], courses: {} },
+                { name: "Cotabato State University", domains: ["csu.edu.ph"], web_pages: ["https://csu.edu.ph/"], coordinates: [7.2167, 124.2500], courses: {} },
+                { name: "Notre Dame of Dadiangas University", domains: ["nddu.edu.ph"], web_pages: ["https://nddu.edu.ph/"], coordinates: [6.1167, 125.1667], courses: {} },
+                { name: "Sultan Kudarat State University", domains: ["sksu.edu.ph"], web_pages: ["https://sksu.edu.ph/"], coordinates: [6.5000, 124.8500], courses: {} },
+                { name: "South Cotabato State College", domains: ["scsc.edu.ph"], web_pages: ["https://scsc.edu.ph/"], coordinates: [6.2000, 125.1667], courses: {} },
+                { name: "Mindanao State University - General Santos", domains: ["msugensan.edu.ph"], web_pages: ["https://msugensan.edu.ph/"], coordinates: [6.1167, 125.1667], courses: {} },
+                
+                // Region XIII - Caraga
+                { name: "Caraga State University", domains: ["carsu.edu.ph"], web_pages: ["https://www.carsu.edu.ph/"], coordinates: [8.9500, 125.5333], courses: {} },
+                { name: "Surigao del Norte State University", domains: ["snsu.edu.ph"], web_pages: ["https://www.snsu.edu.ph/"], coordinates: [9.7833, 125.5000], courses: {} },
+                { name: "Surigao del Sur State University", domains: ["sdssu.edu.ph"], web_pages: ["https://sdssu.edu.ph/"], coordinates: [8.4667, 126.3333], courses: {} },
+                { name: "Father Saturnino Urios University", domains: ["urios.edu.ph"], web_pages: ["https://www.urios.edu.ph/"], coordinates: [8.9500, 125.5333], courses: {} },
+                { name: "Agusan del Sur State College of Agriculture and Technology", domains: ["asscat.edu.ph"], web_pages: ["https://asscat.edu.ph/"], coordinates: [8.5000, 125.7500], courses: {} },
+                { name: "North Eastern Mindanao State University", domains: ["nemsu.edu.ph"], web_pages: ["https://nemsu.edu.ph/"], coordinates: [9.2500, 125.9667], courses: {} },
+                
+                // Bangsamoro Autonomous Region (BARMM)
+                { name: "Mindanao State University - Main", domains: ["msumain.edu.ph"], web_pages: ["https://www.msumain.edu.ph/"], coordinates: [8.0000, 124.3000], courses: {} },
+                { name: "Mindanao State University - Maguindanao", domains: ["msumaguindanao.edu.ph"], web_pages: ["https://msumaguindanao.edu.ph/"], coordinates: [7.1333, 124.3000], courses: {} },
+                { name: "Mindanao State University - Sulu", domains: ["msusulu.edu.ph"], web_pages: ["https://msusulu.edu.ph/"], coordinates: [6.0500, 121.0000], courses: {} },
+                { name: "Mindanao State University - Tawi-Tawi", domains: ["msutawitawi.edu.ph"], web_pages: ["https://msutawitawi.edu.ph/"], coordinates: [5.0333, 119.7667], courses: {} },
+                { name: "Cotabato State University", domains: ["csu.edu.ph"], web_pages: ["https://csu.edu.ph/"], coordinates: [7.2167, 124.2500], courses: {} },
+                { name: "Adiong Memorial Polytechnic State College", domains: ["ampsc.edu.ph"], web_pages: ["#"], coordinates: [7.7833, 124.3000], courses: {} },
+                { name: "Sulu State College", domains: ["ssc.edu.ph"], web_pages: ["#"], coordinates: [6.0500, 121.0000], courses: {} },
+                { name: "Tawi-Tawi Regional Agricultural College", domains: ["trac.edu.ph"], web_pages: ["#"], coordinates: [5.0333, 119.7667], courses: {} }
+            ];
+
+            // Region Keywords for classification (fallback if no coordinates)
+            const regionKeywords = {
+                luzon: [
+                    'manila', 'quezon', 'makati', 'pasig', 'taguig', 'mandaluyong', 'marikina', 'pasay', 'paranaque', 
+                    'las pinas', 'muntinlupa', 'navotas', 'malabon', 'valenzuela', 'caloocan', 'san juan',
+                    'tagaytay', 'baguio', 'pampanga', 'laguna', 'cavite', 'bulacan', 'rizal', 'batangas', 
+                    'nueva', 'ilocos', 'cagayan', 'bicol', 'cordillera', 'tarlac', 'zambales', 'pangasinan', 
+                    'la union', 'isabela', 'benguet', 'abra', 'kalinga', 'ifugao', 'apayao',
+                    'aurora', 'bataan', 'nueva ecija', 'quirino', 'marinduque', 'occidental mindoro', 
+                    'oriental mindoro', 'palawan', 'romblon', 'albay', 'camarines norte', 'camarines sur',
+                    'catanduanes', 'masbate', 'sorsogon', 'dlsu', 'ateneo', 'ust', 'up', 'santo tomas', 
+                    'de la salle', 'polytechnic', 'feu', 'adamson', 'university of the east', 'far eastern', 
+                    'east', 'saint louis', 'cordilleras', 'pup', 'tup', 'ceu', 'san beda', 'national university',
+                    'bulacan state', 'bataan peninsula', 'batangas state', 'cavite state', 'pampanga',
+                    'tarlac state', 'nueva ecija', 'la salette', 'urdaneta'
+                ],
+                visayas: [
+                    'cebu', 'iloilo', 'bacolod', 'tacloban', 'leyte', 'samar', 'negros', 'bohol', 'palawan', 
+                    'aklan', 'capiz', 'antique', 'guimaras', 'siquijor', 'biliran', 'silliman', 'central philippine', 
+                    'cpu', 'san carlos', 'san jose', 'recoletos', 'southern leyte', 'eastern samar', 'northern samar',
+                    'western samar', 'st. paul dumaguete', 'visayas state', 'cebu normal',
+                    'west visayas', 'university of san carlos', 'university of san jose',
+                    'university of the visayas', 'southwestern university', 'negros oriental',
+                    'leyte normal', 'eastern visayas', 'iloilo science', 'st. theresa', 'cebu doctors'
+                ],
+                mindanao: [
+                    'davao', 'cagayan de oro', 'zamboanga', 'cotabato', 'butuan', 'surigao', 'lanao', 
+                    'maguindanao', 'basilan', 'sulu', 'tawi-tawi', 'camiguin', 'misamis', 'bukidnon', 
+                    'agusan', 'xavier', 'mindanao state', 'mindanao', 'marawi', 'gensan', 'general santos',
+                    'sarangani', 'sultan kudarat', 'south cotabato', 'north cotabato', 'compostela valley',
+                    'davao oriental', 'davao del sur', 'davao del norte', 'davao occidental',
+                    'zamboanga del norte', 'zamboanga del sur', 'zamboanga sibugay',
+                    'misamis occidental', 'misamis oriental', 'ateneo de davao', 'university of mindanao',
+                    'western mindanao', 'southern mindanao', 'notre dame', 'mountain view', 'southern baptist',
+                    'cagayan de oro college', 'phinma'
+                ]
+            };
+
+            function getDomain(uni) {
+                return uni.domains && uni.domains[0] ? uni.domains[0] : '';
+            }
+            
+            function getWebPage(uni) {
+                return uni.web_pages && uni.web_pages[0] ? uni.web_pages[0] : '#';
+            }
+
+            function guessRegion(university) {
+                const domain = getDomain(university);
+                const text = (university.name + ' ' + domain).toLowerCase();
+                
+                for (const [region, keywords] of Object.entries(regionKeywords)) {
+                    if (keywords.some(k => text.includes(k))) return region;
+                }
+                
+                if (text.includes('manila') || text.includes('quezon') || text.includes('baguio')) return 'luzon';
+                if (text.includes('cebu') || text.includes('iloilo')) return 'visayas';
+                if (text.includes('davao') || text.includes('mindanao')) return 'mindanao';
+                
+                return 'luzon';
+            }
+
+            // ----- Map Functions -----
+            function initMap() {
+                if (!map) {
+                    map = L.map(mapContainer).setView([12.8797, 121.7740], 6);
+                    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/attribution">CARTO</a>'
+                    }).addTo(map);
+                }
+            }
+
+            function updateMap(universities) {
+                if (!map) initMap();
+                
+                mapMarkers.forEach(marker => map.removeLayer(marker));
+                mapMarkers = [];
+                
+                universities.forEach(uni => {
+                    let lat, lng;
+                    
+                    // Use precise coordinates if available
+                    if (uni.coordinates) {
+                        lat = uni.coordinates[0];
+                        lng = uni.coordinates[1];
+                    } else {
+                        // Fallback to region-based approximation with slight randomization
+                        const region = uni.region || guessRegion(uni);
+                        if (region === 'luzon') { lat = 15.5; lng = 121.0; }
+                        else if (region === 'visayas') { lat = 10.5; lng = 123.5; }
+                        else { lat = 7.5; lng = 125.0; }
+                        
+                        // Add small random offset for visualization
+                        lat += (Math.random() - 0.5) * 0.5;
+                        lng += (Math.random() - 0.5) * 0.5;
+                    }
+                    
+                    const marker = L.marker([lat, lng]).addTo(map)
+                        .bindPopup(`<strong>${uni.name}</strong><br>${uni.region ? uni.region.charAt(0).toUpperCase()+uni.region.slice(1) : 'Philippines'}`);
+                    mapMarkers.push(marker);
+                });
+
+                if (mapMarkers.length > 0) {
+                    const group = L.featureGroup(mapMarkers);
+                    map.fitBounds(group.getBounds().pad(0.1));
+                }
+            }
+
+            // ----- Carousel Functions -----
+            function showSlide(index) {
+                if (index < 0) index = slides.length - 1;
+                if (index >= slides.length) index = 0;
+                
+                slides.forEach(slide => slide.classList.remove('active'));
+                dots.forEach(dot => dot.classList.remove('active'));
+                
+                slides[index].classList.add('active');
+                dots[index].classList.add('active');
+                currentSlide = index;
+            }
+
+            function nextSlide() {
+                showSlide(currentSlide + 1);
+                resetAutoSlide();
+            }
+
+            function prevSlide() {
+                showSlide(currentSlide - 1);
+                resetAutoSlide();
+            }
+
+            function goToSlide(index) {
+                showSlide(index);
+                resetAutoSlide();
+            }
+
+            function startAutoSlide() {
+                autoSlideInterval = setInterval(() => {
+                    nextSlide();
+                }, 5000);
+            }
+
+            function resetAutoSlide() {
+                clearInterval(autoSlideInterval);
+                startAutoSlide();
+            }
+
+            // Function to show featured university in modal
+            window.showFeaturedUniversity = function(index) {
+                const featuredUniversities = [
+                    allUniversities.find(u => u.name.includes('University of the Philippines Diliman')),
+                    allUniversities.find(u => u.name.includes('Ateneo de Manila')),
+                    allUniversities.find(u => u.name.includes('De La Salle')),
+                    allUniversities.find(u => u.name.includes('University of Santo Tomas'))
+                ];
+                
+                if (featuredUniversities[index]) {
+                    showModal(featuredUniversities[index]);
+                }
+            };
+
+            // Make carousel functions globally available
+            window.nextSlide = nextSlide;
+            window.prevSlide = prevSlide;
+            window.goToSlide = goToSlide;
+
+            // ----- Initialize with embedded university data -----
+            function loadUniversities() {
+                // Add region to each university
+                allUniversities = PH_UNIVERSITIES.map(uni => {
+                    return {
+                        ...uni,
+                        region: guessRegion(uni)
+                    };
+                });
+                
+                // Remove duplicates by name (just in case)
+                const unique = {};
+                allUniversities = allUniversities.filter(uni => {
+                    if (unique[uni.name]) return false;
+                    unique[uni.name] = true;
+                    return true;
+                });
+                
+                // Sort alphabetically
+                allUniversities.sort((a, b) => a.name.localeCompare(b.name));
+                
+                // Initial render
+                applyFiltersAndSort();
+                resultCountSpan.textContent = `${allUniversities.length} universities loaded`;
+                
+                // Start carousel auto-slide
+                startAutoSlide();
+            }
+
+            // ----- Apply Filters -----
+            function applyFiltersAndSort() {
+                if (!allUniversities.length) return;
+                
+                let filtered = [...allUniversities];
+                
+                const searchTerm = searchInput.value.trim().toLowerCase();
+                if (searchTerm) {
+                    filtered = filtered.filter(uni => uni.name.toLowerCase().includes(searchTerm));
+                }
+                
+                const region = regionFilter.value;
+                if (region !== 'all') {
+                    filtered = filtered.filter(uni => uni.region === region);
+                }
+                
+                if (showingFavorites) {
+                    filtered = filtered.filter(uni => favorites.includes(uni.name));
+                }
+                
+                filteredUniversities = filtered;
+                resultCountSpan.textContent = `${filtered.length} ${filtered.length === 1 ? 'University' : 'Universities'} found (of ${allUniversities.length} total)`;
+                
+                renderUniversities(filtered);
+                
+                if (!mapContainer.classList.contains('hidden')) {
+                    updateMap(filtered);
+                }
+            }
+
+            // ----- Render Output -----
+            function renderUniversities(universities) {
+                if (universities.length === 0) {
+                    resultsDiv.innerHTML = `
+                        <div class="state-container">
+                            <i class="fas fa-search" style="font-size:2.5rem; color:var(--text-muted); margin-bottom:1rem;"></i>
+                            <h3>No matches found</h3>
+                            <p style="color:var(--text-muted); margin-top:0.5rem;">Try adjusting your search or filters.</p>
+                        </div>`;
+                    return;
+                }
+                
+                resultsDiv.innerHTML = universities.map((uni, index) => {
+                    const domain = getDomain(uni);
+                    const website = getWebPage(uni);
+                    const isFav = favorites.includes(uni.name);
+                    const regionClass = uni.region || 'luzon';
+                    
+                    return `
+                        <div class="university-card" data-name="${uni.name.replace(/"/g, '&quot;')}" style="animation-delay: ${index * 0.03}s">
+                            <div class="card-header">
+                                <span class="region-badge ${regionClass}">${uni.region}</span>
+                                <button class="favorite-btn ${isFav ? 'active' : ''}" onclick="event.stopPropagation(); toggleFavorite('${uni.name.replace(/'/g, "\\'")}')">
+                                    <i class="${isFav ? 'fas' : 'far'} fa-star"></i>
+                                </button>
+                            </div>
+                            <h3 class="university-name">${uni.name}</h3>
+                            ${domain ? `<a href="http://${domain}" target="_blank" class="university-domain" onclick="event.stopPropagation()"><i class="fas fa-globe"></i> ${domain}</a>` : ''}
+                            
+                            <div class="card-footer">
+                                <span class="location-text"><i class="fas fa-map-marker-alt"></i> Philippines</span>
+                                <span style="color: var(--accent-primary); font-size:0.85rem;"><i class="fas fa-book-open"></i> ${uni.courses ? Object.keys(uni.courses).length + ' departments' : 'Click for info'}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                document.querySelectorAll('.university-card').forEach(card => {
+                    card.addEventListener('click', (e) => {
+                        if (e.target.closest('.favorite-btn') || e.target.closest('a')) return;
+                        const uniName = card.dataset.name;
+                        const university = allUniversities.find(u => u.name === uniName);
+                        if (university) showModal(university);
+                    });
+                });
+            }
+
+            // ----- Modal with Course Display -----
+            function showModal(university) {
+                const domain = getDomain(university) || 'N/A';
+                const website = getWebPage(university) || '#';
+                const region = university.region || guessRegion(university);
+                
+                let coursesHtml = '';
+                
+                if (university.courses) {
+                    coursesHtml = '<div class="courses-section"><h3>Academic Programs</h3>';
+                    for (const [category, programs] of Object.entries(university.courses)) {
+                        coursesHtml += `
+                            <div class="course-category">
+                                <h4>${category}</h4>
+                                <div class="course-list">
+                                    ${programs.map(program => `<span class="course-item">${program}</span>`).join('')}
+                                </div>
+                            </div>
+                        `;
+                    }
+                    coursesHtml += '</div>';
+                } else {
+                    coursesHtml = '<p style="color: var(--text-muted); margin: 2rem 0;">Course information not available. Visit university website for details.</p>';
+                }
+                
+                modalBody.innerHTML = `
+                    <h2>${university.name}</h2>
+                    <div class="modal-info">
+                        <div class="info-group">
+                            <label>Domain</label>
+                            <p>${domain}</p>
+                        </div>
+                        <div class="info-group">
+                            <label>Official Website</label>
+                            <a href="${website}" target="_blank">${website}</a>
+                        </div>
+                        <div class="info-group">
+                            <label>Region</label>
+                            <p>${region.charAt(0).toUpperCase() + region.slice(1)}</p>
+                        </div>
+                    </div>
+                    
+                    ${coursesHtml}
+                    
+                    <div id="modalMap" class="modal-map"></div>
+                `;
+                
+                modal.style.display = 'block';
+                document.body.style.overflow = 'hidden';
+                
+                setTimeout(() => {
+                    const modalMap = L.map('modalMap').setView([12.8797, 121.7740], 6);
+                    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/attribution">CARTO</a>'
+                    }).addTo(modalMap);
+                    
+                    let lat, lng;
+                    if (university.coordinates) {
+                        lat = university.coordinates[0];
+                        lng = university.coordinates[1];
+                    } else {
+                        if (region === 'luzon') { lat = 15.5; lng = 121.0; }
+                        else if (region === 'visayas') { lat = 10.5; lng = 123.5; }
+                        else { lat = 7.5; lng = 125.0; }
+                    }
+                    
+                    L.marker([lat, lng]).addTo(modalMap)
+                        .bindPopup(`<strong>${university.name}</strong>`)
+                        .openPopup();
+                }, 100);
+            }
+
+            function closeModal() {
+                modal.style.display = 'none';
+                document.body.style.overflow = 'auto';
+            }
+
+            // ----- AI Assistant Functions (Enhanced with local data) -----
+            function getUniversitiesByRegion(region) {
+                return allUniversities.filter(u => u.region === region).map(u => u.name);
+            }
+
+            function searchUniversity(query) {
+                const lower = query.toLowerCase();
+                return allUniversities.filter(u => u.name.toLowerCase().includes(lower));
+            }
+
+            function formatUniversityList(unis) {
+                if (unis.length === 0) return "No universities found.";
+                if (unis.length > 10) {
+                    return unis.slice(0, 10).join(', ') + ` and ${unis.length - 10} more.`;
+                }
+                return unis.join(', ');
+            }
+
+            async function askGemini(question) {
+                const lowerQuestion = question.toLowerCase();
+                
+                // --- Local knowledge base ---
+                // Region query
+                if (lowerQuestion.includes('universities in') || lowerQuestion.includes('schools in')) {
+                    if (lowerQuestion.includes('luzon')) {
+                        const unis = getUniversitiesByRegion('luzon');
+                        return `There are ${unis.length} universities in Luzon. Some of them include: ${formatUniversityList(unis.slice(0, 15))}`;
+                    }
+                    if (lowerQuestion.includes('visayas')) {
+                        const unis = getUniversitiesByRegion('visayas');
+                        return `There are ${unis.length} universities in Visayas. Some of them include: ${formatUniversityList(unis.slice(0, 15))}`;
+                    }
+                    if (lowerQuestion.includes('mindanao')) {
+                        const unis = getUniversitiesByRegion('mindanao');
+                        return `There are ${unis.length} universities in Mindanao. Some of them include: ${formatUniversityList(unis.slice(0, 15))}`;
+                    }
+                }
+                
+                // Specific university query
+                const uniMatches = searchUniversity(question);
+                if (uniMatches.length === 1) {
+                    const u = uniMatches[0];
+                    return `${u.name} is located in ${u.region}. ${u.courses ? 'It offers programs in various fields.' : 'Course information available in the app.'}`;
+                } else if (uniMatches.length > 1) {
+                    return `I found multiple universities matching your query: ${formatUniversityList(uniMatches.map(u => u.name))}. Could you be more specific?`;
+                }
+                
+                // --- Fallback to Gemini ---
+                const systemPrompt = `You are UniBay AI, a helpful assistant for the UniBay app, which helps users find information about Philippine universities. 
+                You have access to a database of ${allUniversities.length} universities. Be friendly, informative, and concise. 
+                If asked about specific universities, provide accurate information based on the database. 
+                If you don't know something, suggest that the user check the university's official website or CHED's portal.`;
+                
+                const fullPrompt = `${systemPrompt}\n\nUser Question: ${question}`;
+                
+                try {
+                    const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            contents: [{
+                                parts: [{
+                                    text: fullPrompt
+                                }]
+                            }]
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('API request failed');
+                    }
+                    
+                    const data = await response.json();
+                    return data.candidates[0].content.parts[0].text;
+                } catch (error) {
+                    console.error('Gemini API error:', error);
+                    return "I'm having trouble connecting right now. Here are some tips: check CHED's official website at ched.gov.ph, visit the university's official website, or try searching the FOI portal at foi.gov.ph for more information. You can also try asking a simpler question!";
+                }
+            }
+
+            function addMessage(text, isUser = false) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `ai-message ${isUser ? 'user' : 'assistant'}`;
+                messageDiv.textContent = text;
+                aiMessages.appendChild(messageDiv);
+                aiMessages.scrollTop = aiMessages.scrollHeight;
+            }
+
+            async function handleAIQuestion() {
+                const question = aiInput.value.trim();
+                if (!question) return;
+                
+                addMessage(question, true);
+                aiInput.value = '';
+                aiSendBtn.disabled = true;
+                
+                addMessage("Thinking...", false);
+                
+                const answer = await askGemini(question);
+                
+                // Remove the "Thinking..." message
+                aiMessages.removeChild(aiMessages.lastChild);
+                addMessage(answer, false);
+                aiSendBtn.disabled = false;
+            }
+
+            // ----- Navigation (Home/About) -----
+            function showHome() {
+                mainContent.classList.remove('hidden');
+                aboutContent.classList.add('hidden');
+                homeLink.classList.add('active');
+                aboutLink.classList.remove('active');
+            }
+
+            function showAbout() {
+                mainContent.classList.add('hidden');
+                aboutContent.classList.remove('hidden');
+                aboutLink.classList.add('active');
+                homeLink.classList.remove('active');
+            }
+
+            homeLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                showHome();
+            });
+
+            aboutLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                showAbout();
+            });
+
+            // ----- Event Listeners -----
+            searchBtn.addEventListener('click', applyFiltersAndSort);
+            searchInput.addEventListener('input', applyFiltersAndSort);
+            regionFilter.addEventListener('change', applyFiltersAndSort);
+            
+            favoritesToggle.addEventListener('click', () => {
+                showingFavorites = !showingFavorites;
+                favoritesToggle.classList.toggle('active-state', showingFavorites);
+                favoritesToggle.innerHTML = showingFavorites 
+                    ? '<i class="fas fa-heart"></i> Favorites Only' 
+                    : '<i class="far fa-heart"></i> Favorites';
+                applyFiltersAndSort();
+            });
+            
+            mapToggle.addEventListener('click', () => {
+                mapContainer.classList.toggle('hidden');
+                const isHidden = mapContainer.classList.contains('hidden');
+                mapToggle.classList.toggle('active-state', !isHidden);
+                mapToggle.innerHTML = isHidden 
+                    ? '<i class="far fa-map"></i> Show Map' 
+                    : '<i class="fas fa-map-marked-alt"></i> Hide Map';
+                
+                if (!isHidden) {
+                    initMap();
+                    updateMap(filteredUniversities);
+                }
+            });
+            
+            closeBtn.addEventListener('click', closeModal);
+            window.addEventListener('click', (e) => {
+                if (e.target === modal) closeModal();
+            });
+
+            // AI Assistant event listeners
+            aiAssistantBtn.addEventListener('click', () => {
+                aiAssistantPanel.classList.toggle('open');
+            });
+            
+            closeAIBtn.addEventListener('click', () => {
+                aiAssistantPanel.classList.remove('open');
+            });
+            
+            aiSendBtn.addEventListener('click', handleAIQuestion);
+            
+            aiInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    handleAIQuestion();
+                }
+            });
+
+            // Pause auto-slide when hovering over carousel
+            const carousel = document.getElementById('heroCarousel');
+            carousel.addEventListener('mouseenter', () => {
+                clearInterval(autoSlideInterval);
+            });
+            
+            carousel.addEventListener('mouseleave', () => {
+                startAutoSlide();
+            });
+
+            // Theme Management
+            lightModeBtn.addEventListener('click', () => {
+                document.body.classList.remove('dark-mode');
+                lightModeBtn.classList.add('active');
+                darkModeBtn.classList.remove('active');
+            });
+            
+            darkModeBtn.addEventListener('click', () => {
+                document.body.classList.add('dark-mode');
+                darkModeBtn.classList.add('active');
+                lightModeBtn.classList.remove('active');
+            });
+
+            // ----- Globals -----
+            window.toggleFavorite = function(uniName) {
+                const idx = favorites.indexOf(uniName);
+                if (idx === -1) favorites.push(uniName);
+                else favorites.splice(idx, 1);
+                localStorage.setItem('favorites', JSON.stringify(favorites));
+                applyFiltersAndSort();
+            };
+
+            // Initialize with embedded university data
+            loadUniversities();
+        })();
+    </script>
+</body>
+</html>
